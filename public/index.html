@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Business Reads Journal</title>
+  <meta name="description" content="Turn daily business reading into Chief of Staff interview practice.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <a class="visually-hidden" href="#content">Skip to content</a>
+  <div class="app" id="app" data-dict-open="false">
+
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="/" data-link>
+        <span class="brand-mark" data-icon="notebook-pen"></span>
+        <span class="brand-name">Business Reads<br>Journal</span>
+      </a>
+      <nav class="nav">
+        <div class="nav-section">
+          <div class="nav-heading">Practice</div>
+          <a class="nav-link" href="/" data-link data-nav="/"><span data-icon="sun"></span>Today</a>
+          <a class="nav-link" href="/history" data-link data-nav="/history"><span data-icon="history"></span>History</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-heading">Learn</div>
+          <a class="nav-link" href="/glossary" data-link data-nav="/glossary"><span data-icon="book-a"></span>Glossary</a>
+          <a class="nav-link" href="/progress" data-link data-nav="/progress"><span data-icon="chart-line"></span>Progress</a>
+          <a class="nav-link" href="/reviews" data-link data-nav="/reviews"><span data-icon="file-text"></span>Weekly reviews</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-heading">App</div>
+          <a class="nav-link" href="/settings" data-link data-nav="/settings"><span data-icon="settings"></span>Settings</a>
+          <a class="nav-link" href="/about" data-link data-nav="/about"><span data-icon="info"></span>About</a>
+        </div>
+      </nav>
+      <div class="profile">
+        <span class="avatar" id="profile-avatar" aria-hidden="true">·</span>
+        <div>
+          <div class="profile-name" id="profile-name">Reader</div>
+          <div class="profile-meta" id="profile-meta">Local · private</div>
+        </div>
+      </div>
+    </aside>
+
+    <header class="header">
+      <div class="header-left">
+        <span class="header-title" id="header-title"></span>
+        <span class="pill" id="header-pill" hidden></span>
+      </div>
+      <ol class="stepper" id="stepper" aria-label="Session stages" hidden></ol>
+      <div class="header-right">
+        <button class="icon-btn" id="pdf-btn" type="button" aria-label="Download PDF" title="Download PDF" disabled>
+          <span data-icon="download"></span>
+        </button>
+        <button class="icon-btn dict-toggle" id="dict-toggle" type="button" aria-label="Open dictionary" title="Dictionary (/)">
+          <span data-icon="book-a"></span>
+        </button>
+      </div>
+    </header>
+
+    <main class="main" id="main">
+      <div class="content" id="content" tabindex="-1"></div>
+    </main>
+
+    <div class="dict-scrim" id="dict-scrim"></div>
+    <aside class="dict" id="dict" aria-label="Dictionary"></aside>
+  </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "host": "127.0.0.1",
+  "port": 4317,
+  "ai": {
+    "claudePath": "",
+    "models": {
+      "light": "haiku",
+      "strong": "opus"
+    },
+    "timeoutMs": 120000,
+    "maxConcurrent": 2
+  }
+}

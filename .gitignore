@@ -1,6 +1,29 @@
+# Personal data: journal DB, backups, exports. Never commit.
+/data/
+
+# Scratch working directory for Claude Code headless calls
+/tmp-ai/
+
+# Dependencies
 node_modules/
+
+# Secrets
 .env
 .env.*
 !.env.example
+
+# Fontshare fonts: the ITF Free Font License forbids redistributing them via a
+# repository. scripts/fetch-fonts.js downloads a fresh copy on first run.
+/public/fonts/*
+!/public/fonts/README.md
+
+# Local overrides of config.json
+config.local.json
+
+# OS / editor files
 .DS_Store
 Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.log

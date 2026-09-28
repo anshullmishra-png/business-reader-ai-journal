@@ -1,0 +1,29 @@
+{
+  "name": "business-reads-journal",
+  "version": "0.1.0",
+  "description": "Local-first journal that turns daily business reading into Chief of Staff interview practice.",
+  "private": true,
+  "type": "module",
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "demo": "node server/index.js --demo",
+    "vendor": "node scripts/vendor.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.2.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "chart.js": "^4.5.1",
+    "lucide-static": "^1.48.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true
+  }
+}

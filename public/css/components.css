@@ -1,0 +1,150 @@
+/* ---------- Page typography ---------- */
+.page-title {
+  font-family: var(--font-content);
+  font-weight: 900; font-size: 48px; line-height: 1.08; letter-spacing: -0.03em;
+}
+.page-lede { margin-top: 12px; color: var(--text-muted); font-size: 16px; }
+.meta-row {
+  display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 14px;
+  color: var(--text-faint); font-size: 13px; font-weight: 700;
+}
+.meta-row > * + *::before { content: '·'; margin-right: 10px; }
+.section { margin-top: 48px; }
+.section-heading {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-faint); margin-bottom: 14px;
+}
+.prose {
+  font-family: var(--font-content);
+  font-size: var(--content-size); line-height: var(--content-leading);
+}
+.prose p + p { margin-top: 1em; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 18px; border-radius: var(--r-card);
+  border: 1px solid transparent; cursor: pointer;
+  font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap;
+  transition: transform var(--ease), background var(--ease), border-color var(--ease), opacity var(--ease);
+}
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-primary:hover:not(:disabled) { transform: scale(1.05); }
+.btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-hover); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+.icon-btn {
+  width: 40px; height: 40px; padding: 0; border-radius: var(--r-card);
+  background: transparent; border: 1px solid transparent; color: var(--text-muted);
+  display: inline-grid; place-items: center; cursor: pointer;
+  transition: background var(--ease), color var(--ease);
+}
+.icon-btn:hover:not(:disabled) { background: var(--surface-hover); color: var(--text); }
+.icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ---------- Pills & tags ---------- */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px; padding: 0 10px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); background: var(--surface);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-muted); white-space: nowrap;
+}
+.pill-dark { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.tag {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 8px;
+  border-radius: var(--r-tag); background: var(--border-subtle);
+  font-size: 12px; font-weight: 700; color: var(--text-2);
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+}
+.card + .card { margin-top: 12px; }
+
+/* ---------- Forms ---------- */
+.field { display: grid; gap: 6px; }
+.field + .field { margin-top: 20px; }
+.label { font-size: 13px; font-weight: 700; }
+.hint { font-size: 12px; color: var(--text-faint); }
+.input {
+  height: 42px; padding: 0 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface);
+  transition: border-color var(--ease);
+}
+.input:focus-visible { border-color: var(--accent); box-shadow: none; }
+.input-mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 13px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; font-size: 14px; }
+.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* The floating "bento" input container (URL entry, interview answers) */
+.bento {
+  background: var(--surface);
+  border-radius: var(--r-input);
+  box-shadow: var(--shadow-input);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.bento-tabs {
+  display: flex; gap: 6px; padding: 12px 16px 0;
+}
+.bento-body { padding: 12px 20px 16px; }
+
+/* ---------- Skeletons (every AI wait) ---------- */
+.skeleton {
+  background: linear-gradient(90deg, var(--border-subtle) 0%, #EEEEEE 50%, var(--border-subtle) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+.skeleton-line { height: 14px; margin: 10px 0; }
+.skeleton-line.w-60 { width: 60%; }
+.skeleton-line.w-80 { width: 80%; }
+.status-line { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+/* ---------- Empty states ---------- */
+.empty {
+  text-align: center; padding: 40px 24px;
+  border: 1px dashed var(--border); border-radius: var(--r-card);
+  color: var(--text-muted);
+}
+.empty .icon { width: 24px; height: 24px; margin: 0 auto 12px; color: var(--text-faint); }
+.empty-title { font-weight: 700; color: var(--text); margin-bottom: 4px; }
+
+/* ---------- Score colors ---------- */
+.score-low { color: var(--score-low); }
+.score-mid { color: var(--score-mid); }
+.score-high { color: var(--score-high); }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  background: var(--accent); color: var(--accent-fg);
+  padding: 10px 18px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 700; z-index: 60;
+}
+
+/* ---------- Dictionary panel content ---------- */
+.dict-input-wrap { position: relative; }
+.dict-input-wrap .icon { position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; color: var(--text-faint); }
+.dict-input { width: 100%; padding-left: 36px; }
+.kbd {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px;
+  border: 1px solid var(--border); border-radius: 5px; background: var(--bg);
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+}
+.dict-empty { font-family: var(--font-content); color: var(--text-muted); font-size: 16px; line-height: 1.7; }
+.link-quiet {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 700; color: var(--text-muted); text-decoration: none;
+}
+.link-quiet:hover { color: var(--text); }
