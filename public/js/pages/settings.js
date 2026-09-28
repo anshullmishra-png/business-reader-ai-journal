@@ -61,13 +61,45 @@ export default async function render(el) {
 
     <section class="section">
       <h2 class="section-heading">AI engine</h2>
-      <div class="card"><span class="hint">Claude Code status and today's AI call count arrive in phase 2.</span></div>
+      <div class="card" id="ai-card"></div>
     </section>
 
     <section class="section">
       <h2 class="section-heading">Backup</h2>
       <div class="card"><span class="hint">Export and restore arrive in phase 11.</span></div>
     </section>`.toString();
+
+  // ---- AI engine card ----
+  const STATUS = {
+    ready: ['ok', 'Ready'],
+    checking: ['', 'Checking…'],
+    not_installed: ['bad', 'Not installed'],
+    not_logged_in: ['bad', 'Not logged in'],
+    error: ['bad', 'Test call failed'],
+  };
+  let aiTimer = null;
+  const drawAi = (ai) => {
+    const [dot, label] = STATUS[ai.checking ? 'checking' : ai.status] ?? ['bad', ai.status];
+    $('#ai-card', el).innerHTML = html`
+      <dl class="dl">
+        <dt>Status</dt><dd><span class="status-dot ${dot}"></span>${label}${ai.message && ai.status !== 'ready' ? html` <span class="hint">(${ai.message})</span>` : ''}</dd>
+        <dt>Claude Code</dt><dd>${ai.version ?? '—'}</dd>
+        <dt>Executable</dt><dd class="hint">${ai.exe_path ?? 'not found'}</dd>
+        <dt>Login</dt><dd>${ai.auth_method ?? '—'}</dd>
+        <dt>AI calls today</dt><dd>${ai.calls_today.total}${ai.calls_today.total ? html` <span class="hint">(${ai.calls_today.ok} succeeded)</span>` : ''}</dd>
+      </dl>
+      <div class="row" style="margin-top:18px">
+        <button class="btn btn-ghost btn-sm" type="button" id="ai-recheck" ${ai.checking ? raw('disabled') : ''}>${raw(icon('refresh-cw'))}Check again</button>
+        <span class="hint">API keys are never passed to Claude Code; it always uses your subscription login.</span>
+      </div>`.toString();
+    appState.ai = ai;
+    clearTimeout(aiTimer);
+    if (ai.checking) aiTimer = setTimeout(async () => drawAi(await api('/ai/health')), 1500);
+  };
+  drawAi(await api('/ai/health'));
+  el.addEventListener('click', async (e) => {
+    if (e.target.closest('#ai-recheck')) drawAi(await api('/ai/health/recheck', { method: 'POST' }));
+  });
 
   $('#prefs', el).addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -100,4 +132,6 @@ export default async function render(el) {
     $('#token', el).value = capture_token;
     toast('New token generated');
   });
+
+  return () => clearTimeout(aiTimer);
 }

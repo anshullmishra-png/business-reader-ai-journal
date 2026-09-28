@@ -6,6 +6,8 @@ import { ZodError } from 'zod';
 import { config, paths } from './config.js';
 import { db } from './db/index.js';
 import { settingsRouter } from './routes/settings.js';
+import { aiRouter } from './routes/ai.js';
+import { recheckHealth, getHealth } from './ai/health.js';
 import { fetchFonts } from '../scripts/fetch-fonts.js';
 
 const app = express();
@@ -27,6 +29,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, demo: config.demo, dbDriver: db.driver, port: boundPort });
 });
 app.use('/api/settings', settingsRouter);
+app.use('/api/ai', aiRouter);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ---- Static files + client-side routes ----
@@ -84,3 +87,15 @@ console.log(`  Database: ${paths.db} (${db.driver})`);
 console.log('  Keep this window open while you use the app. Press Ctrl+C to stop.');
 console.log('');
 if (config.openBrowser) openInBrowser(url);
+
+// Check Claude Code in the background; the UI shows a setup screen until it's ready.
+recheckHealth().then(() => {
+  const h = getHealth();
+  const line = {
+    ready: `  Claude Code ${h.version ?? ''} is ready.`,
+    not_installed: "  Claude Code isn't installed. The app will show setup steps.",
+    not_logged_in: "  Claude Code isn't logged in. Run: claude auth login",
+    error: `  Claude Code check failed: ${h.message ?? 'unknown error'}`,
+  }[h.status];
+  if (line) console.log(line);
+});

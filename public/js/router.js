@@ -3,10 +3,13 @@
 import { $ } from './lib/dom.js';
 import { hydrateIcons } from './lib/icons.js';
 import { setActiveNav, setHeader } from './shell.js';
+import { appState } from './app.js';
 
+// needsAi: show the setup screen instead until Claude Code is ready.
+// Other pages (history, glossary, progress…) stay usable without AI.
 const routes = [
-  { path: /^\/$/, load: () => import('./pages/today.js') },
-  { path: /^\/session\/(?<id>\d+)$/, load: () => import('./pages/session.js') },
+  { path: /^\/$/, load: () => import('./pages/today.js'), needsAi: true },
+  { path: /^\/session\/(?<id>\d+)$/, load: () => import('./pages/session.js'), needsAi: true },
   { path: /^\/history$/, load: () => import('./pages/history.js') },
   { path: /^\/glossary$/, load: () => import('./pages/glossary.js') },
   { path: /^\/progress$/, load: () => import('./pages/progress.js') },
@@ -22,7 +25,10 @@ export async function render() {
   const token = ++renderToken;
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const match = routes.map((r) => ({ r, m: path.match(r.path) })).find((x) => x.m);
-  const mod = await (match ? match.r.load() : import('./pages/notfound.js'));
+  const blocked = match?.r.needsAi && appState.ai?.status !== 'ready';
+  const mod = await (blocked
+    ? import('./pages/setup.js')
+    : match ? match.r.load() : import('./pages/notfound.js'));
   if (token !== renderToken) return; // a newer navigation won
 
   if (typeof cleanup === 'function') cleanup();
@@ -34,7 +40,7 @@ export async function render() {
   setActiveNav(path);
   $('#main').scrollTop = 0;
 
-  cleanup = await mod.default(el, match?.m.groups ?? {});
+  cleanup = await mod.default(el, match?.m.groups ?? {}, { onReady: render });
   hydrateIcons(el);
 }
 
