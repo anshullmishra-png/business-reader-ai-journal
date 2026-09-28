@@ -40,6 +40,7 @@ export default async function render(el) {
     <section class="section">
       <h2 class="section-heading">Browser extension</h2>
       <div class="card">
+        <p style="margin-bottom:18px"><a class="link-quiet" href="/extension" data-link>${raw(icon('puzzle'))}How to install the extension</a></p>
         <div class="field">
           <label class="label" for="token">Capture token</label>
           <div class="row">

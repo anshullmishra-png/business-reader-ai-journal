@@ -16,6 +16,7 @@ const routes = [
   { path: /^\/reviews$/, load: () => import('./pages/reviews.js') },
   { path: /^\/about$/, load: () => import('./pages/about.js') },
   { path: /^\/settings$/, load: () => import('./pages/settings.js') },
+  { path: /^\/extension$/, load: () => import('./pages/extension.js') },
 ];
 
 let cleanup = null;

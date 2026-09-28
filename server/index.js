@@ -7,7 +7,12 @@ import { config, paths } from './config.js';
 import { db } from './db/index.js';
 import { settingsRouter } from './routes/settings.js';
 import { aiRouter } from './routes/ai.js';
+import { sessionsRouter } from './routes/sessions.js';
+import { captureRouter } from './routes/capture.js';
 import { recheckHealth, getHealth } from './ai/health.js';
+import { startJobs } from './jobs/runner.js';
+import { SECTORS, COMPANY_STAGES, SOURCES } from './ai/taxonomy.js';
+import './jobs/handlers.js';
 import { fetchFonts } from '../scripts/fetch-fonts.js';
 
 const app = express();
@@ -26,10 +31,21 @@ app.use(express.json({ limit: '2mb' }));
 
 // ---- API ----
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, demo: config.demo, dbDriver: db.driver, port: boundPort });
+  res.json({
+    ok: true,
+    demo: config.demo,
+    dbDriver: db.driver,
+    port: boundPort,
+    extension_dir: join(paths.root, 'extension'),
+  });
+});
+app.get('/api/meta', (_req, res) => {
+  res.json({ sectors: SECTORS, company_stages: COMPANY_STAGES, sources: SOURCES });
 });
 app.use('/api/settings', settingsRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/sessions', sessionsRouter);
+app.use('/api/capture', captureRouter);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ---- Static files + client-side routes ----
@@ -45,7 +61,11 @@ app.use((err, _req, res, _next) => {
   if (err instanceof ZodError) {
     return res.status(400).json({ error: 'Invalid input', issues: err.issues });
   }
-  if (err.status) return res.status(err.status).json({ error: err.message });
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'That article is too long.' });
+  if (err.status) {
+    const { status, message, code, title } = err;
+    return res.status(status).json({ error: message, code, title });
+  }
   console.error(err);
   res.status(500).json({ error: 'Something went wrong on the server.' });
 });
@@ -87,6 +107,8 @@ console.log(`  Database: ${paths.db} (${db.driver})`);
 console.log('  Keep this window open while you use the app. Press Ctrl+C to stop.');
 console.log('');
 if (config.openBrowser) openInBrowser(url);
+
+startJobs();
 
 // Check Claude Code in the background; the UI shows a setup screen until it's ready.
 recheckHealth().then(() => {

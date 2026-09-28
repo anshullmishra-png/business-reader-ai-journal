@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Send to Journal: settings</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    body { width: auto; max-width: 440px; padding: 20px; }
+    label { display: block; font-weight: 700; margin: 14px 0 6px; }
+    input { width: 100%; height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; font: 13px Consolas, monospace; }
+    input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .btn { margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <img src="icons/icon-32.png" width="24" height="24" alt="">
+    <span class="brand">Send to Journal: settings</span>
+  </header>
+  <form id="form">
+    <label for="token">Capture token</label>
+    <input id="token" autocomplete="off" spellcheck="false" required>
+    <p class="hint">Copy it from the journal: Settings → Browser extension.</p>
+
+    <label for="server">Journal address</label>
+    <input id="server" spellcheck="false" placeholder="http://127.0.0.1:4317">
+    <p class="hint">Change this only if the journal said it's using a different port.</p>
+
+    <button class="btn" type="submit">Save</button>
+    <p class="ok" id="saved" hidden style="margin-top:12px">Saved ✓</p>
+  </form>
+  <script src="options.js"></script>
+</body>
+</html>

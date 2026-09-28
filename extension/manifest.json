@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Send to Journal",
+  "short_name": "Send to Journal",
+  "version": "1.0.0",
+  "description": "Send the article you're reading to your local Business Reads Journal.",
+  "action": {
+    "default_title": "Send to Journal",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["http://127.0.0.1/*"]
+}
