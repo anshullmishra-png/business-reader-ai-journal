@@ -7,6 +7,24 @@ import { SOURCES } from '../ai/taxonomy.js';
 import { getSession, getArticleText, setTags } from '../services/sessions.js';
 import { getSet, saveQuestions, setGenStatus, recentHistory } from '../services/questions.js';
 import { getSetting } from '../services/settings.js';
+import { relatedReading } from '../ai/prompts/relatedReading.js';
+import { saveRelated, markRelatedFailed } from '../services/related.js';
+
+registerHandler('related_reading', {
+  async run(job) {
+    const s = getSession(job.session_id);
+    if (!s) return;
+    const { items } = await runTask(relatedReading({
+      title: s.title,
+      source: SOURCES[s.source],
+      text: getArticleText(s.id),
+    }));
+    saveRelated(s.id, items);
+  },
+  fail(job) {
+    if (getSession(job.session_id)) markRelatedFailed(job.session_id);
+  },
+});
 
 registerHandler('tag_article', {
   async run(job) {

@@ -2,6 +2,7 @@ import { db, now } from '../db/index.js';
 import { detectSource } from '../ai/taxonomy.js';
 import { countWords } from './extract.js';
 import { enqueue } from '../jobs/runner.js';
+import { ensureRelated } from './related.js';
 
 export const MIN_ARTICLE_WORDS = 300;
 
@@ -41,11 +42,13 @@ export function createSession({ url = null, title, author = null, published_at =
     created_at: now(),
   };
   const id = Number(insertSession.run(row).lastInsertRowid);
+  // Both start right away so they're usually done before the user needs them.
   enqueue('tag_article', { sessionId: id });
+  ensureRelated(id);
   return { id, existing: false };
 }
 
-const PUBLIC_COLUMNS = `id, url, source, title, author, published_at, word_count, tags, tags_status, stage,
+const PUBLIC_COLUMNS = `id, url, source, title, author, published_at, word_count, tags, tags_status, related_status, stage,
   comprehension_text, comprehension_seconds, comprehension_submitted_at, comprehension_eval,
   comprehension_score, interview_score, overall_score, verdict, created_at, updated_at`;
 
@@ -108,6 +111,27 @@ export function submitComprehension(id, { text, seconds, onLocked }) {
       throw httpError(409, 'Your comprehension is already submitted and locked.');
     }
     onLocked?.();
+  })();
+}
+
+/**
+ * Explore → Interview. Only allowed once the main question set is ready, so the
+ * interview can start instantly with every question already written.
+ */
+export function startInterview(id) {
+  const t = now();
+  return db.transaction(() => {
+    const set = db.prepare("SELECT id, gen_status FROM question_sets WHERE session_id = ? AND kind = 'main'").get(id);
+    if (!set || set.gen_status !== 'ready') {
+      throw httpError(409, 'Your questions are still being prepared.');
+    }
+    const { changes } = db.prepare(`UPDATE sessions SET stage = 'interview', updated_at = ?
+                                    WHERE id = ? AND stage = 'explore'`).run(t, id);
+    if (changes === 0) {
+      requireSession(id);
+      throw httpError(409, 'The interview has already started.');
+    }
+    db.prepare("UPDATE question_sets SET status = 'in_progress', started_at = ? WHERE id = ?").run(t, set.id);
   })();
 }
 

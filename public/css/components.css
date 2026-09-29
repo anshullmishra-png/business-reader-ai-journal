@@ -184,6 +184,30 @@ p code, .hint code { background: var(--border-subtle); padding: 1px 5px; border-
 .locked-meta .icon { width: 13px; height: 13px; }
 .locked-text { white-space: pre-wrap; }
 
+/* ---------- Explore stage ---------- */
+.read-item { display: flex; gap: 16px; align-items: flex-start; transition: opacity var(--ease); }
+.read-item.is-done { opacity: 0.55; }
+.read-item.is-done .read-title { text-decoration: line-through; text-decoration-color: var(--text-faint); }
+.read-check { padding-top: 2px; }
+.read-check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+.read-body { flex: 1; min-width: 0; }
+.read-title { font-family: var(--font-content); font-weight: 900; font-size: 20px; line-height: 1.3; margin-top: 8px; }
+.read-why { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+.read-queries { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.query-link {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+  padding: 6px 12px; border-radius: var(--r-pill); border: 1px solid var(--border);
+  font-size: 13px; font-weight: 700; text-decoration: none; color: var(--text-2);
+  transition: background var(--ease), border-color var(--ease);
+}
+.query-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.query-link .icon { width: 14px; height: 14px; color: var(--text-faint); }
+.query-link:hover { background: var(--surface-hover); border-color: var(--zinc-400); color: var(--text); }
+.start-bar {
+  margin-top: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+  position: sticky; bottom: 16px;
+}
+
 /* ---------- Screenshot placeholders (extension guide) ---------- */
 .shot-placeholder {
   margin-top: 12px; height: 140px; border-radius: var(--r-card);

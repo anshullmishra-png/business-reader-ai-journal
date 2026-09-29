@@ -115,7 +115,15 @@ export default async function render(el, { id }) {
     stageEl.append(locked, next);
     renderLockedComprehension(locked, s);
     if (s.stage === 'explore') {
-      stageCleanup = renderExplore(next, s, { onChange: (fresh) => { s = fresh; } });
+      stageCleanup = renderExplore(next, s, {
+        onChange: (fresh, { stageChanged } = {}) => {
+          s = fresh;
+          if (stageChanged) { drawStage(); $('#main').scrollTop = 0; }
+        },
+      });
+    } else if (s.stage === 'interview') {
+      next.innerHTML = html`<div class="empty">${raw(icon('clock'))}
+        <div class="empty-title">Interview in progress</div>The timed interview screen arrives in phase 6.</div>`.toString();
     }
   };
   drawStage();

@@ -36,7 +36,16 @@ export const COMPANY_STAGES = [
   'Multiple / industry-wide',
 ];
 
-export const QUESTION_TYPES = ['mcq', 'short', 'structured', 'estimation'];
+export const RELATED_CATEGORIES = [
+  'Company background',
+  'Competitor landscape',
+  'Sector explainer',
+  'Founders',
+  'Funding history',
+  'Core concept',
+];
+
+export const QUESTION_TYPES =['mcq', 'short', 'structured', 'estimation'];
 
 // Every interview question is tagged with exactly one of these.
 export const FRAMEWORKS = [

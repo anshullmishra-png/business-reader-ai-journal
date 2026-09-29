@@ -1,6 +1,8 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body { height: 100%; margin: 0; }
+/* The app shell scrolls its own panes; the document itself never scrolls. */
+body { overflow: hidden; }
 
 body {
   background: var(--bg);

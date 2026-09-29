@@ -1,6 +1,6 @@
 // zod schemas for AI outputs. Each is also sent to Claude Code as --json-schema.
 import { z } from 'zod';
-import { SECTORS, COMPANY_STAGES, QUESTION_TYPES, FRAMEWORKS } from './taxonomy.js';
+import { SECTORS, COMPANY_STAGES, QUESTION_TYPES, FRAMEWORKS, RELATED_CATEGORIES } from './taxonomy.js';
 
 const short = (max) => z.string().trim().min(1).max(max);
 
@@ -11,6 +11,20 @@ export const Tags = z.object({
   company_stage: z.enum(COMPANY_STAGES),
   geography: short(40).describe('Main market, e.g. "India", "India + SE Asia", "Global"'),
   themes: z.array(short(40)).min(3).max(5).describe('3-5 short business themes, e.g. "Unit economics", "Regulatory risk"'),
+});
+
+// ---------- Related reading ----------
+// Search queries only: model-written URLs are often hallucinated.
+const looksLikeUrl = (s) => /https?:\/\/|www\.|\b[a-z0-9-]+\.(com|in|org|net|io|co)\/\S/i.test(s);
+
+export const RelatedReading = z.object({
+  items: z.array(z.object({
+    title: short(90).describe('The topic to explore, e.g. "How Zepto\'s dark stores work"'),
+    category: z.enum(RELATED_CATEGORIES),
+    why: short(200).describe('One line on why this matters for understanding THIS article'),
+    queries: z.array(short(120).refine((q) => !looksLikeUrl(q), 'Queries must be search text, not URLs'))
+      .min(1).max(2).describe('1-2 Google search queries. Plain search text, never URLs.'),
+  })).min(3).max(5),
 });
 
 // ---------- Interview questions ----------

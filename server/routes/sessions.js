@@ -4,16 +4,23 @@ import { TagsEdit } from '../ai/schemas.js';
 import { fetchArticle, ExtractError, countWords } from '../services/extract.js';
 import {
   createSession, getSession, requireSession, listSessions, listToday, setTags, retryTagging,
-  deleteSession, submitComprehension, httpError, MIN_ARTICLE_WORDS,
+  deleteSession, submitComprehension, startInterview, httpError, MIN_ARTICLE_WORDS,
 } from '../services/sessions.js';
 import { comprehensionWords, MIN_WORDS, MAX_WORDS } from '../services/words.js';
 import { createMainSet, getMainSet, retryGeneration } from '../services/questions.js';
+import { ensureRelated, listRelated, setRelatedDone } from '../services/related.js';
 
-// Session plus the status of its main question set (never the questions themselves).
+// Session plus related reading and the status of its main question set
+// (never the questions themselves).
 function sessionView(id) {
-  const s = requireSession(id);
+  let s = requireSession(id);
+  if (s.related_status === 'none') {
+    ensureRelated(id); // sessions captured before related reading existed
+    s = requireSession(id);
+  }
   const set = getMainSet(id);
   s.main_set = set ? { id: set.id, gen_status: set.gen_status, status: set.status } : null;
+  s.related = s.related_status === 'ready' ? listRelated(id) : [];
   return s;
 }
 
@@ -87,6 +94,28 @@ sessionsRouter.post('/:id/comprehension', (req, res) => {
   }
   // Question generation starts the moment the comprehension locks.
   submitComprehension(id, { text: text.trim(), seconds, onLocked: () => createMainSet(id) });
+  res.json(sessionView(id));
+});
+
+// ---- Stage 3: Explore ----
+sessionsRouter.patch('/:id/related/:itemId', (req, res) => {
+  const id = Id.parse(req.params.id);
+  const { done } = z.object({ done: z.boolean() }).parse(req.body);
+  requireSession(id);
+  if (!setRelatedDone(id, Id.parse(req.params.itemId), done)) throw httpError(404, 'Reading item not found');
+  res.json(sessionView(id));
+});
+
+sessionsRouter.post('/:id/related/retry', (req, res) => {
+  const id = Id.parse(req.params.id);
+  requireSession(id);
+  ensureRelated(id); // no-op unless it failed
+  res.json(sessionView(id));
+});
+
+sessionsRouter.post('/:id/interview/start', (req, res) => {
+  const id = Id.parse(req.params.id);
+  startInterview(id);
   res.json(sessionView(id));
 });
 

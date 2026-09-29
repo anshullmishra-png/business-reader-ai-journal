@@ -97,7 +97,10 @@
 .step-sep { width: 20px; height: 1px; background: var(--border); }
 
 /* ---------- Main ---------- */
-.main { grid-area: main; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+/* position: relative contains absolutely positioned children (e.g. .visually-hidden)
+   so they can't stretch the document. */
+.main { grid-area: main; position: relative; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+.dict { position: relative; }
 .content { max-width: var(--content-max); margin: 0 auto; padding: 56px 24px 120px; }
 
 /* ---------- Dictionary panel ---------- */
