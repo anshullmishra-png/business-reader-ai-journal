@@ -1,25 +1,9 @@
-import { html, raw, $, $$, scoreClass } from '../lib/dom.js';
+import { html, raw, $, $$ } from '../lib/dom.js';
 import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
 import { setHeader } from '../shell.js';
 import { navigate } from '../router.js';
-import { SOURCE_LABELS, STAGE_LABELS, fmtTime, fmtScore, plural } from '../lib/format.js';
-
-function sessionCard(s) {
-  const done = s.stage === 'verdict' && s.overall_score != null;
-  return html`
-    <a class="card session-card" href="/session/${s.id}" data-link>
-      <div class="session-card-main">
-        <div class="session-card-title">${s.title}</div>
-        <div class="meta-row" style="margin-top:6px">
-          <span>${SOURCE_LABELS[s.source]}</span><span>${plural(s.word_count, 'word')}</span><span>${fmtTime(s.created_at)}</span>
-        </div>
-      </div>
-      ${done
-        ? html`<div class="session-card-score ${scoreClass(s.overall_score)}">${fmtScore(s.overall_score)}</div>`
-        : html`<span class="pill">${STAGE_LABELS[s.stage]}</span>`}
-    </a>`;
-}
+import { sessionCard } from '../lib/sessionCard.js';
 
 export default async function render(el) {
   setHeader({ title: 'Today' });
