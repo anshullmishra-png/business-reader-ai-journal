@@ -90,10 +90,10 @@ export default async function render(el) {
       <section class="stats-grid">
         ${readinessTile(p.readiness)}
         ${tile('Articles read', h.total_articles)}
-        ${tile('Reading streak', `${h.streak} day${h.streak === 1 ? '' : 's'}`)}
+        ${tile('Reading streak', h.streak, h.streak === 1 ? 'day' : 'days')}
         ${tile('Avg score, last 7', fmtScore(h.avg_last7), h.avg_prev7 != null ? html`${delta(h.avg_last7, h.avg_prev7)} vs previous 7` : 'Needs more sessions', scoreClass(h.avg_last7))}
         ${tile('Difficulty', `${h.difficulty}/10`)}
-        ${tile('Glossary', `${h.glossary_size} terms`)}
+        ${tile('Glossary', h.glossary_size, h.glossary_size === 1 ? 'term' : 'terms')}
       </section>
 
       <section class="section">

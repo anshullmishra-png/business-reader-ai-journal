@@ -5,6 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { paths } from '../config.js';
+import { applyPendingRestore } from '../services/backup.js';
 
 const require = createRequire(import.meta.url);
 
@@ -71,7 +72,11 @@ function migrate(db) {
   }
 }
 
+// A restore uploaded in Settings is swapped in here, before the database opens.
+export const restoreInfo = applyPendingRestore();
+if (restoreInfo) console.log(`[db] restored a backup (previous journal saved as ${restoreInfo.safety ?? 'nothing to save'})`);
+
 export const db = open(paths.db);
-migrate(db);
+migrate(db); // also upgrades older backups to the current schema
 
 export const now = () => new Date().toISOString();

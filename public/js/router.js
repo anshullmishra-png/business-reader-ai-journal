@@ -26,7 +26,8 @@ export async function render() {
   const token = ++renderToken;
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const match = routes.map((r) => ({ r, m: path.match(r.path) })).find((x) => x.m);
-  const blocked = match?.r.needsAi && appState.ai?.status !== 'ready';
+  // Only a confirmed problem shows the setup screen; "still checking" doesn't block.
+  const blocked = match?.r.needsAi && ['not_installed', 'not_logged_in', 'error'].includes(appState.ai?.status);
   const mod = await (blocked
     ? import('./pages/setup.js')
     : match ? match.r.load() : import('./pages/notfound.js'));

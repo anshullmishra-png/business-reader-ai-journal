@@ -11,7 +11,9 @@ import { sessionsRouter } from './routes/sessions.js';
 import { captureRouter } from './routes/capture.js';
 import { glossaryRouter } from './routes/glossary.js';
 import { progressRouter } from './routes/progress.js';
+import { backupRouter } from './routes/backup.js';
 import { checkWeeklyReview } from './services/reviews.js';
+import { normalizeTerm } from './services/glossary.js';
 import { AiError, friendlyMessage } from './ai/claudeBridge.js';
 import { recheckHealth, getHealth } from './ai/health.js';
 import { startJobs } from './jobs/runner.js';
@@ -31,6 +33,8 @@ app.use((req, res, next) => {
   res.status(403).send('Forbidden');
 });
 
+// The restore upload is a raw file, so it's mounted before the JSON parser.
+app.use('/api/backup', backupRouter);
 app.use(express.json({ limit: '2mb' }));
 
 // ---- API ----
@@ -104,6 +108,13 @@ function openInBrowser(url) {
     ? ['rundll32', ['url.dll,FileProtocolHandler', url]]
     : [process.platform === 'darwin' ? 'open' : 'xdg-open', [url]];
   spawn(cmd, args, { detached: true, stdio: 'ignore' }).unref();
+}
+
+// Demo mode seeds its own journal (data/demo.db) the first time it runs.
+if (config.demo && db.prepare('SELECT COUNT(*) AS n FROM sessions').get().n === 0) {
+  const { seedDemo } = await import('../scripts/seed-demo.js');
+  const r = seedDemo({ db, normalize: normalizeTerm });
+  console.log(`[demo] seeded ${r.sessions} fictional sessions and ${r.terms} glossary terms`);
 }
 
 if (!existsSync(join(paths.public, 'fonts', 'Satoshi-400.woff2'))) {

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Business Reads Journal</title>
+  <meta name="description" content="A local-first journal that turns daily business reading into Chief of Staff interview practice, with a deliberately tough AI interviewer.">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700,900&display=swap">
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=zodiak@400,900&display=swap">
+  <style>
+    :root {
+      --bg: #FAFAFA; --surface: #FFFFFF; --ink: #18181B; --muted: #737373; --faint: #A3A3A3;
+      --border: #E5E5E5; --subtle: #F5F5F5; --amber: #B45309;
+      --ui: 'Satoshi', ui-sans-serif, system-ui, sans-serif; --serif: 'Zodiak', Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    header.top { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; text-decoration: none; }
+    .mark { width: 32px; height: 32px; border-radius: 9px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 14px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 12px; font-weight: 700; text-decoration: none; transition: transform 150ms ease-in-out; }
+    .btn-dark { background: var(--ink); color: #fff; }
+    .btn-dark:hover { transform: scale(1.05); }
+    .btn-ghost { border: 1px solid var(--border); background: var(--surface); }
+    .hero { padding: 64px 0 40px; max-width: 760px; }
+    .kicker { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); }
+    h1 { font-family: var(--serif); font-weight: 900; font-size: clamp(38px, 6vw, 60px); line-height: 1.05; letter-spacing: -0.03em; margin: 12px 0 18px; }
+    .lede { font-size: 19px; color: var(--muted); margin: 0 0 28px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .shot { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(24,24,27,0.35); background: #fff; }
+    section { padding: 56px 0; }
+    h2 { font-family: var(--serif); font-weight: 900; font-size: 34px; letter-spacing: -0.02em; margin: 0 0 18px; }
+    .section-kicker { margin-bottom: 8px; }
+    .loop { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .card { background: var(--surface); border: 1px solid var(--subtle); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(24,24,27,0.04); }
+    .card .n { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+    .card h3 { margin: 0 0 4px; font-size: 16px; }
+    .card p { margin: 0; color: var(--muted); font-size: 14px; }
+    .prose { font-family: var(--serif); font-size: 19px; line-height: 1.8; max-width: 720px; }
+    .prose p { margin: 0 0 1em; }
+    .scale { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 18px; }
+    .scale .score { font-family: var(--serif); font-weight: 900; font-size: 34px; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    figure { margin: 0; }
+    figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; font-weight: 700; }
+    ul.ticks { padding-left: 20px; max-width: 760px; }
+    ul.ticks li { margin: 6px 0; }
+    code { font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; background: var(--subtle); padding: 1px 6px; border-radius: 4px; }
+    footer { border-top: 1px solid var(--border); padding: 28px 0 48px; color: var(--faint); font-size: 13px; }
+    @media (max-width: 640px) { .hero { padding-top: 32px; } section { padding: 40px 0; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="#"><span class="mark">B</span>Business Reads Journal</a>
+      <a class="btn btn-ghost" href="https://github.com/anshullmishra-png/business-reader-ai-journal">View on GitHub</a>
+    </header>
+
+    <div class="hero">
+      <div class="kicker">A portfolio project · Productivity with AI</div>
+      <h1>Daily business reading, turned into interview practice.</h1>
+      <p class="lede">I read The Ken, The Arc and Entrackr every morning. This journal makes me prove I understood each article:
+        condense it, pull a few threads, then face a timed 10-question interview scored by an AI interviewer that doesn't round up to be kind.</p>
+      <div class="actions">
+        <a class="btn btn-dark" href="https://github.com/anshullmishra-png/business-reader-ai-journal#setup-windows">Run it locally</a>
+        <a class="btn btn-ghost" href="#how">How it works</a>
+      </div>
+    </div>
+
+    <img class="shot" src="screenshots/verdict.png" alt="A session verdict: 7.6 out of 10 with comprehension and interview scores and two things to work on next" width="1440" height="1100">
+
+    <section>
+      <div class="kicker section-kicker">The daily loop</div>
+      <h2>Five stages, one article at a time</h2>
+      <div class="loop">
+        <div class="card"><div class="n">1</div><h3>Add</h3><p>Read on the original site, then send the article from your browser with one click.</p></div>
+        <div class="card"><div class="n">2</div><h3>Write</h3><p>Condense it in 100–200 words: what happened, why it matters, the money, your take.</p></div>
+        <div class="card"><div class="n">3</div><h3>Explore</h3><p>Follow 3–5 threads: competitors, the sector, founders, the core concept.</p></div>
+        <div class="card"><div class="n">4</div><h3>Interview</h3><p>10 questions, 60 seconds each, no going back. MCQs, estimations, MECE breakdowns.</p></div>
+        <div class="card"><div class="n">5</div><h3>Verdict</h3><p>A blunt score, a model answer beside every answer, and two things to fix next.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker section-kicker">Why a tough interviewer</div>
+      <h2>Honest feedback beats encouraging feedback</h2>
+      <div class="prose">
+        <p>The evaluator is modelled on a demanding Chief of Staff interviewer: short sentences, no compliments unless earned.
+          It calls out vague thinking, missing numbers and lists that aren't mutually exclusive and collectively exhaustive.
+          It is harsh on the work and never on the person.</p>
+      </div>
+      <div class="scale">
+        <div class="card"><div class="score">5/10</div><p>An acceptable first-round answer.</p></div>
+        <div class="card"><div class="score">8+</div><p>Rare. Needs numbers, structure and a non-obvious insight.</p></div>
+        <div class="card"><div class="score">10</div><p>Almost never. Scores are never rounded up.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker section-kicker">Inside the app</div>
+      <h2>What it looks like</h2>
+      <div class="gallery">
+        <figure><img class="shot" src="screenshots/interview.png" alt="Timed interview question with four options" loading="lazy"><figcaption>The timed interview: one question at a time, no going back.</figcaption></figure>
+        <figure><img class="shot" src="screenshots/progress.png" alt="Progress dashboard with readiness index and score trend" loading="lazy"><figcaption>Progress: readiness index, score trend and framework strength.</figcaption></figure>
+        <figure><img class="shot" src="screenshots/glossary.png" alt="Glossary with Leitner boxes" loading="lazy"><figcaption>Glossary and vocab quiz on a 5-box Leitner schedule.</figcaption></figure>
+        <figure><img class="shot" src="screenshots/reviews.png" alt="Weekly review" loading="lazy"><figcaption>Weekly reviews: what improved, what's weak, three goals.</figcaption></figure>
+      </div>
+      <p style="color:var(--faint);font-size:13px;margin-top:14px">Screenshots use the app's demo mode: every company, article and score shown is fictional.</p>
+    </section>
+
+    <section id="how">
+      <div class="kicker section-kicker">How it works</div>
+      <h2>Local-first, with Claude as a demanding tutor</h2>
+      <ul class="ticks">
+        <li><strong>Runs on your laptop.</strong> A small Node.js server and a SQLite file, bound to <code>127.0.0.1</code>. No cloud, no accounts.</li>
+        <li><strong>Claude Code as the AI engine.</strong> The app calls the Claude Code CLI in headless mode with your own subscription. API keys are stripped from the process, so nothing is billed to a key.</li>
+        <li><strong>Structured, validated output.</strong> Every prompt has a JSON schema; every answer is validated before it's saved, with an automatic repair retry.</li>
+        <li><strong>No waiting.</strong> Tagging and reading suggestions start when you capture an article; interview questions are written while you explore.</li>
+        <li><strong>Private by design.</strong> The browser extension captures only what you click on, from your own logged-in tab. Article text never leaves your laptop except to ground the AI's feedback.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Business Reads Journal · built by Anshull Mishra ·
+      <a href="https://github.com/anshullmishra-png/business-reader-ai-journal">Source on GitHub</a> · MIT licence
+    </footer>
+  </div>
+</body>
+</html>

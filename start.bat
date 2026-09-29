@@ -27,7 +27,17 @@ if not exist "node_modules\" (
   )
 )
 
-node server\index.js --open %*
+rem BRJ_LAUNCHER lets the app restart itself (exit code 75) after restoring a backup.
+set BRJ_LAUNCHER=1
+set BRJ_OPEN=--open
+:run
+node server\index.js %BRJ_OPEN% %*
+if %errorlevel%==75 (
+  echo.
+  echo   Restarting to finish restoring your backup...
+  set BRJ_OPEN=
+  goto run
+)
 if errorlevel 1 (
   echo.
   echo   The server stopped with an error. See the messages above.

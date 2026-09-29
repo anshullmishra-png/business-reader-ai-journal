@@ -67,7 +67,23 @@ export default async function render(el) {
 
     <section class="section">
       <h2 class="section-heading">Backup</h2>
-      <div class="card"><span class="hint">Export and restore arrive in phase 11.</span></div>
+      <div class="card" id="backup-card">
+        <div class="field">
+          <span class="label">Export a backup</span>
+          <span class="hint">Downloads a complete copy of your journal as one .db file. A copy is also kept in <code>data/backups</code>.</span>
+          <div><a class="btn btn-ghost btn-sm" href="/api/backup/export" download>${raw(icon('download'))}Export backup</a></div>
+        </div>
+        <div class="field">
+          <label class="label" for="restore-file">Restore a backup</label>
+          <span class="hint">Replaces everything in this journal with the backup. Your current journal is saved to <code>data/backups</code> first.</span>
+          <div class="row">
+            <input type="file" id="restore-file" accept=".db" class="visually-hidden">
+            <button class="btn btn-ghost btn-sm" type="button" id="restore-btn">${raw(icon('upload'))}Choose a backup file…</button>
+          </div>
+          <p class="hint" id="restore-status" aria-live="polite"></p>
+        </div>
+        <p class="hint" id="backup-list"></p>
+      </div>
     </section>`.toString();
 
   // ---- AI engine card ----
@@ -100,6 +116,44 @@ export default async function render(el) {
   drawAi(await api('/ai/health'));
   el.addEventListener('click', async (e) => {
     if (e.target.closest('#ai-recheck')) drawAi(await api('/ai/health/recheck', { method: 'POST' }));
+  });
+
+  // ---- Backup / restore ----
+  api('/backup').then(({ backups }) => {
+    $('#backup-list', el).textContent = backups.length
+      ? `${backups.length} backup${backups.length === 1 ? '' : 's'} saved. Latest: ${backups[0].name}`
+      : 'No backups yet.';
+  }).catch(() => {});
+
+  $('#restore-btn', el).addEventListener('click', () => $('#restore-file', el).click());
+  $('#restore-file', el).addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!confirm(`Restore "${file.name}"? Everything currently in this journal will be replaced (a safety copy is saved first).`)) return;
+    const status = $('#restore-status', el);
+    status.textContent = 'Checking and uploading the backup…';
+    try {
+      const res = await fetch('/api/backup/restore', {
+        method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: file,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Restore failed.');
+      if (data.restart === 'manual') {
+        status.textContent = `Backup accepted (${data.sessions} sessions, ${data.terms} terms). Restart the app to finish: close its window and run start.bat again.`;
+        return;
+      }
+      status.textContent = `Backup accepted (${data.sessions} sessions, ${data.terms} terms). Restarting…`;
+      // Wait for the server to come back, then reload.
+      await new Promise((r) => setTimeout(r, 1500));
+      for (let i = 0; i < 40; i++) {
+        try { if ((await fetch('/api/health')).ok) { location.href = '/'; return; } } catch { /* still restarting */ }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      status.textContent = 'The app is taking a while to restart. Check its window, or run start.bat again.';
+    } catch (err) {
+      status.textContent = err.message;
+    }
   });
 
   $('#prefs', el).addEventListener('submit', async (e) => {

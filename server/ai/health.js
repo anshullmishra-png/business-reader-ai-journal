@@ -34,6 +34,8 @@ async function check() {
       state = { ...base, status: 'not_logged_in', checked_at: new Date().toISOString() };
       return;
     }
+    // Logged in: usable now. The test call below confirms it end to end.
+    if (info.loggedIn === true) state = { ...base, status: 'ready', checking: true };
 
     // One tiny real call proves the whole path works end to end.
     const res = await runTask({
