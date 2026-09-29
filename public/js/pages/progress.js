@@ -53,7 +53,7 @@ function chartCard(id, title, { table = false, height = 260, extra = '' } = {}) 
 }
 
 export default async function render(el) {
-  setHeader({ title: 'Progress' });
+  setHeader({ title: 'Progress', pdf: '/print/portfolio?autoprint' });
   el.classList.add('content-wide');
   let win = (() => { try { return localStorage.getItem('brj:progress-window') || '7a'; } catch { return '7a'; } })();
   const charts = [];

@@ -56,6 +56,10 @@ app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ---- Static files + client-side routes ----
 app.use(express.static(paths.public, { index: false }));
+// Print-optimised reports are their own document (no app shell).
+app.get(/^\/print\/(session\/\d+|review\/\d+|portfolio)\/?$/, (_req, res) => {
+  res.sendFile(join(paths.public, 'print.html'));
+});
 app.use((req, res, next) => {
   // Any extension-less GET is an app page; the client router renders it.
   if (req.method !== 'GET' || extname(req.path)) return next();

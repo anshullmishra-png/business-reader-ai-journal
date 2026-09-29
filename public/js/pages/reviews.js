@@ -16,7 +16,10 @@ function reviewCard(r) {
       <div class="review-head">
         <div class="meta-row" style="margin:0"><span>${fmtDate(r.period_start)} – ${fmtDate(r.period_end)}</span>
           <span>${r.session_ids.length} session${r.session_ids.length === 1 ? '' : 's'}</span></div>
-        <span class="score score-sm ${scoreClass(s.overall)}">${fmtScore(s.overall)}</span>
+        <span class="row">
+          <a class="link-quiet" href="/print/review/${r.id}?autoprint" target="_blank" rel="noopener">${raw(icon('download'))}PDF</a>
+          <span class="score score-sm ${scoreClass(s.overall)}">${fmtScore(s.overall)}</span>
+        </span>
       </div>
       <h2 class="review-headline">${c.headline}</h2>
 
@@ -41,6 +44,7 @@ export default async function render(el) {
 
   async function draw() {
     const { reviews, pending, last_failed } = await api('/reviews');
+    setHeader({ title: 'Weekly reviews', pdf: reviews.length ? `/print/review/${reviews[0].id}?autoprint` : null });
     el.innerHTML = html`
       <h1 class="page-title">Weekly reviews</h1>
       <p class="page-lede">Written after every 7 scored sessions or 7 days, whichever comes first, the next time you open the app.</p>

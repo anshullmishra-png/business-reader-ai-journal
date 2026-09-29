@@ -98,10 +98,12 @@ export default async function render(el, { id }) {
 
   // ---- Stage content ----
   let stageCleanup = null;
+  // The session report exists once the verdict is in.
+  const reportUrl = () => (s.stage === 'verdict' && s.overall_score != null ? `/print/session/${s.id}?autoprint` : null);
   const drawStage = () => {
     stageCleanup?.();
     stageCleanup = null;
-    setHeader({ title: s.title, pill: STAGE_PILL[s.stage], stage: s.stage });
+    setHeader({ title: s.title, pill: STAGE_PILL[s.stage], stage: s.stage, pdf: reportUrl() });
     const stageEl = $('#stage', el);
     stageEl.innerHTML = '';
     // Nothing but the question on screen during the interview.
@@ -126,7 +128,7 @@ export default async function render(el, { id }) {
       lockedEl.className = 'section';
       stageEl.append(verdictEl, lockedEl);
       stageCleanup = renderVerdict(verdictEl, s, {
-        setHeaderPill: (pill) => setHeader({ title: s.title, pill: pill ?? STAGE_PILL.verdict, stage: 'verdict' }),
+        setHeaderPill: (pill) => setHeader({ title: s.title, pill: pill ?? STAGE_PILL.verdict, stage: 'verdict', pdf: reportUrl() }),
       });
       renderLockedComprehension(lockedEl, s);
       return;
