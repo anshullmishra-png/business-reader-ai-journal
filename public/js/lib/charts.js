@@ -6,8 +6,8 @@ export const C = {
   mid: '#52525B',
   light: '#A1A1AA',
   faint: '#D4D4D8',
-  amber: '#B45309',
-  grid: '#F4F4F5',
+  amber: '#8B1E2D', // the one accent: oxblood
+  grid: '#EEE6D6',
   text: '#737373',
 };
 

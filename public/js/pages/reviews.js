@@ -3,6 +3,7 @@ import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
 import { setHeader } from '../shell.js';
 import { fmtDate, fmtScore } from '../lib/format.js';
+import { drawing } from '../lib/drawings.js';
 
 function points(list) {
   return html`<ul class="review-points">${list.map((p) => html`<li><strong>${p.point}</strong><span>${p.evidence}</span></li>`)}</ul>`;
@@ -53,7 +54,7 @@ export default async function render(el) {
           <p class="status-line">${raw(icon('loader-circle', 'spin'))}Writing this week's review…</p>
           <div class="skeleton skeleton-line w-80"></div><div class="skeleton skeleton-line w-60"></div></div>` : ''}
         ${!pending && last_failed ? html`<p class="hint" style="margin-bottom:12px">The last review couldn't be written. It will be retried next time you open the app.</p>` : ''}
-        ${reviews.length ? reviews.map(reviewCard) : !pending ? html`<div class="empty">${raw(icon('file-text'))}
+        ${reviews.length ? reviews.map(reviewCard) : !pending ? html`<div class="empty">${drawing('letter')}
           <div class="empty-title">No reviews yet</div>Your first review is written after 7 scored sessions or 7 days.</div>` : ''}
       </section>`.toString();
     clearTimeout(timer);

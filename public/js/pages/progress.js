@@ -4,6 +4,7 @@ import { icon } from '../lib/icons.js';
 import { setHeader } from '../shell.js';
 import { fmtScore } from '../lib/format.js';
 import { loadChart, C, SERIES, lastPointAmber, dayLabels, endLabels } from '../lib/charts.js';
+import { drawing } from '../lib/drawings.js';
 
 const WINDOWS = [
   { key: '7d', label: 'Last 7 days', prev: 'previous 7 days' },
@@ -81,7 +82,7 @@ export default async function render(el) {
     const h = p.headline;
 
     if (!h.total_articles || !p.trend.length && win === 'all') {
-      body.innerHTML = html`<div class="empty">${raw(icon('chart-line'))}
+      body.innerHTML = html`<div class="empty">${drawing('chart')}
         <div class="empty-title">Not enough data yet</div>Charts appear after your first scored session.</div>`.toString();
       return;
     }
@@ -104,7 +105,7 @@ export default async function render(el) {
           ${tile('Interview', fmtScore(cur.interview), w.prev ? delta(cur.interview, prev?.interview) : '', scoreClass(cur.interview))}
         </div>
         ${chartCard('c-trend', 'Score trend', { table: true })}`
-        : html`<div class="empty">No scored sessions in this window.</div>`}
+        : html`<div class="empty">${drawing('chart')}<div class="empty-title">No scored sessions in this window</div>Switch to a longer window above.</div>`}
       </section>
 
       <section class="section">

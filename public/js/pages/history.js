@@ -4,6 +4,7 @@ import { icon } from '../lib/icons.js';
 import { setHeader } from '../shell.js';
 import { sessionCard } from '../lib/sessionCard.js';
 import { SOURCE_LABELS } from '../lib/format.js';
+import { drawing } from '../lib/drawings.js';
 
 const SCORE_BANDS = {
   '': 'Any score',
@@ -40,7 +41,7 @@ export default async function render(el) {
   if (!sessions.length) {
     el.innerHTML = html`
       <h1 class="page-title">History</h1>
-      <section class="section"><div class="empty">${raw(icon('history'))}
+      <section class="section"><div class="empty">${drawing('newspaper')}
         <div class="empty-title">No sessions yet</div>Your sessions will be listed here once you read your first article.</div></section>`.toString();
     return;
   }
@@ -82,7 +83,7 @@ export default async function render(el) {
       (avg ? ` · average score ${avg}` : '');
     $('#history-list', el).innerHTML = shown.length
       ? html`${shown.map((s) => sessionCard(s, { showDate: true }))}`.toString()
-      : html`<div class="empty">No sessions match these filters.</div>`.toString();
+      : html`<div class="empty">${drawing('search')}<div class="empty-title">No sessions match these filters</div>Try a wider date range or clear the filters.</div>`.toString();
     saveFilters(f);
   }
 

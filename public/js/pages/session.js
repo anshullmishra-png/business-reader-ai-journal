@@ -3,11 +3,14 @@ import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
 import { setHeader } from '../shell.js';
 import { navigate } from '../router.js';
-import { SOURCE_LABELS, fmtDate, fmtTime, fmtMaybeDate, plural } from '../lib/format.js';
+import { fmtDate, fmtTime, fmtMaybeDate, plural } from '../lib/format.js';
+import { sourceMark } from '../lib/sourceMark.js';
 import { renderWrite, renderLockedComprehension } from '../stages/write.js';
 import { renderExplore } from '../stages/explore.js';
 import { renderInterview } from '../stages/interview.js';
 import { renderVerdict } from '../stages/verdict.js';
+import { stageHeading } from '../lib/format.js';
+import { drawing } from '../lib/drawings.js';
 
 let meta = null; // { sectors, company_stages }
 const getMeta = async () => (meta ??= await api('/meta'));
@@ -60,7 +63,7 @@ export default async function render(el, { id }) {
     s = await api(`/sessions/${id}`);
   } catch (err) {
     setHeader({ title: 'Session not found' });
-    el.innerHTML = html`<div class="empty">${raw(icon('layers'))}
+    el.innerHTML = html`<div class="empty">${drawing('notebook')}
       <div class="empty-title">Session not found</div>It may have been deleted.
       <div style="margin-top:16px"><a class="btn btn-ghost btn-sm" href="/" data-link>Back to Today</a></div></div>`.toString();
     return;
@@ -73,7 +76,7 @@ export default async function render(el, { id }) {
   el.innerHTML = html`
     <h1 class="page-title article-title">${s.title}</h1>
     <div class="meta-row">
-      <span>${SOURCE_LABELS[s.source]}</span>
+      ${sourceMark(s.source)}
       <span>${plural(s.word_count, 'word')}</span>
       <span>Captured ${fmtDate(s.created_at)}, ${fmtTime(s.created_at)}</span>
       ${published ? html`<span>Published ${published}</span>` : ''}
@@ -84,7 +87,7 @@ export default async function render(el, { id }) {
     <section class="section" id="stage"></section>
 
     <section class="section" data-hide-in-interview>
-      <h2 class="section-heading">Tags</h2>
+      ${stageHeading('add', 'Tags')}
       <div class="card" id="tags"></div>
     </section>
 
@@ -111,6 +114,7 @@ export default async function render(el, { id }) {
 
     if (s.stage === 'interview') {
       stageCleanup = renderInterview(stageEl, {
+        heading: stageHeading('interview'),
         sessionId: s.id,
         setId: s.main_set.id,
         onProgress: (q) => setHeader({ title: s.title, pill: `Interview · Q${q.position}/${q.total}`, stage: 'interview' }),

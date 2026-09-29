@@ -4,6 +4,7 @@ import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
 import { appState } from '../app.js';
 import { comprehensionWords, MIN_WORDS, MAX_WORDS, TEMPLATE_LABELS, TEMPLATE_TEXT } from '../lib/words.js';
+import { stageHeading } from '../lib/format.js';
 
 // Drafts live in this browser only, so a reload doesn't lose work.
 const draftKey = (id) => `brj:draft:${id}`;
@@ -33,7 +34,7 @@ export function renderWrite(container, session, { onSubmitted }) {
   let startedAt = draft.startedAt ?? null;
 
   container.innerHTML = html`
-    <h2 class="section-heading">Your comprehension</h2>
+    ${stageHeading('write')}
     <p class="hint write-intro">Read the article on the original site first. Then condense it in ${MIN_WORDS}–${MAX_WORDS} words:
       what happened, why it matters, how the money works, and what you'd do. Once you submit, it's locked.</p>
 
@@ -162,7 +163,7 @@ export function renderLockedComprehension(container, session) {
   const secs = session.comprehension_seconds ?? 0;
   const mins = Math.floor(secs / 60);
   container.innerHTML = html`
-    <h2 class="section-heading">Your comprehension</h2>
+    ${stageHeading('write', 'Locked')}
     <div class="card locked-card">
       <div class="locked-meta">
         <span class="row">${raw(icon('lock'))}Locked</span>

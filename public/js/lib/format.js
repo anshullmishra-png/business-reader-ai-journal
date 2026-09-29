@@ -1,4 +1,6 @@
-export const SOURCE_LABELS = { the_ken: 'The Ken', the_arc: 'The Arc', entrackr: 'Entrackr', other: 'Other' };
+import { html } from './dom.js';
+
+export const SOURCE_LABELS ={ the_ken: 'The Ken', the_arc: 'The Arc', entrackr: 'Entrackr', other: 'Other' };
 
 export const STAGE_LABELS = {
   write: 'Write',
@@ -22,4 +24,11 @@ export function fmtMaybeDate(s) {
 
 export const fmtScore = (n) => (n == null ? '—' : Number(n).toFixed(1));
 
-export const plural = (n, word) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`;
+// "Stage 2 of 5 · Write" section heading, matching the header stepper.
+const STAGE_NUMBERS = { add: 1, write: 2, explore: 3, interview: 4, verdict: 5 };
+const STAGE_NAMES = { add: 'Add', write: 'Write', explore: 'Explore', interview: 'Interview', verdict: 'Verdict' };
+export function stageHeading(stage, suffix = '') {
+  return html`<h2 class="section-heading"><span><span class="kicker-step">Stage ${STAGE_NUMBERS[stage]} of 5 ·</span> ${STAGE_NAMES[stage]}${suffix ? ` · ${suffix}` : ''}</span></h2>`;
+}
+
+export const plural =(n, word) => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`;

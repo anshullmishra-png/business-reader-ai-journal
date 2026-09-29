@@ -4,6 +4,7 @@ import { icon } from '../lib/icons.js';
 import { setHeader } from '../shell.js';
 import { entryHtml } from '../lib/entry.js';
 import { fmtDate } from '../lib/format.js';
+import { drawing } from '../lib/drawings.js';
 
 function firstSentence(s) {
   const m = String(s).match(/^.*?[.!?](\s|$)/);
@@ -146,7 +147,7 @@ export default async function render(el) {
                 <button class="btn btn-ghost btn-sm" type="button" data-delete="${t.id}" style="margin-top:12px">${raw(icon('trash-2'))}Remove from glossary</button>`
               : html`<p class="g-snippet">${firstSentence(t.definition)}</p>`}
           </div>`)
-        : html`<div class="empty">${raw(icon('book-a'))}
+        : html`<div class="empty">${state.q || state.sector ? drawing('search') : drawing('book')}
             <div class="empty-title">${state.q || state.sector ? 'No matching terms' : 'Your glossary is empty'}</div>
             ${state.q || state.sector ? 'Try another search or sector.' : 'Look up a term in the dictionary panel (press /) and it will be saved here.'}</div>`}
       </div>`.toString();

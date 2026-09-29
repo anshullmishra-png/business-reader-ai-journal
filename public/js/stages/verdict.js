@@ -4,6 +4,7 @@ import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
 import { fmtScore } from '../lib/format.js';
 import { renderInterview } from './interview.js';
+import { stageHeading } from '../lib/format.js';
 
 const TYPE_LABELS = { mcq: 'Multiple choice', short: 'Short answer', structured: 'Structured', estimation: 'Estimation' };
 const LEVELS = [
@@ -132,8 +133,31 @@ function extraRoundView(set, expanded) {
   return html`<div id="extra-live" data-set="${set.id}"></div>`; // in progress: interview mounts here
 }
 
+// ---------- The verdict moment: the score counts up once ----------
+const counted = new Set();
+function countUp(root) {
+  const el = root.querySelector('[data-count-to]');
+  if (!el) return;
+  const target = Number(el.dataset.countTo);
+  const key = el.closest('[data-session]')?.dataset.session ?? 'x';
+  if (counted.has(key) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  counted.add(key);
+  // A plain interval (not animation frames, which pause in background tabs);
+  // it always ends on the exact score.
+  const start = Date.now();
+  const DURATION = 1100;
+  el.textContent = '0.0';
+  const timer = setInterval(() => {
+    const p = Math.min(1, (Date.now() - start) / DURATION);
+    const eased = 1 - (1 - p) ** 3; // ease-out cubic
+    el.textContent = (target * eased).toFixed(1);
+    if (p >= 1) clearInterval(timer);
+  }, 30);
+}
+
 // ---------- Main ----------
 export function renderVerdict(container, session, { setHeaderPill }) {
+  container.dataset.session = String(session.id);
   let r = null;
   let timer = null;
   let liveCleanup = null;
@@ -156,24 +180,26 @@ export function renderVerdict(container, session, { setHeaderPill }) {
     }
     if (main.status !== 'evaluated') {
       container.innerHTML = html`
-        <h2 class="section-heading">Verdict</h2>
+        ${stageHeading('verdict')}
         ${evaluating('The interviewer is reading your answers. This takes a minute or two…')}`.toString();
       return;
     }
 
     const busyExtra = r.extras.some((x) => x.status !== 'evaluated' && x.eval_status !== 'failed' && x.gen_status !== 'failed');
     container.innerHTML = html`
-      <section class="verdict-hero card">
+      ${stageHeading('verdict')}
+      <section class="verdict-hero card card-ruled">
         <div class="verdict-score">
-          ${score(r.overall_score, 'score-xl')}<span class="score-of">/10</span>
-        </div>
-        <div class="verdict-side">
-          <p class="verdict-summary">${r.verdict.summary}</p>
+          <span class="score score-xl ${scoreClass(r.overall_score)}" data-count-to="${r.overall_score}">${fmtScore(r.overall_score)}</span><span class="score-of">/10</span>
           <div class="verdict-split">
             <span>Comprehension ${score(r.comprehension_score, 'score-inline')}<span class="hint"> · 40%</span></span>
             <span>Interview ${score(r.interview_score, 'score-inline')}<span class="hint"> · 60%</span></span>
           </div>
         </div>
+        <blockquote class="pull-quote">
+          <p>${r.verdict.summary}</p>
+          <cite>The interviewer</cite>
+        </blockquote>
       </section>
 
       <section class="section">${workOnNext(r.verdict)}</section>
@@ -204,9 +230,12 @@ export function renderVerdict(container, session, { setHeaderPill }) {
         </div>
       </section>`.toString();
 
+    countUp(container);
     const live = $('#extra-live', container);
     if (live) {
+      const liveSet = r.extras.find((x) => x.id === Number(live.dataset.set));
       liveCleanup = renderInterview(live, {
+        heading: html`<h2 class="section-heading"><span>Extra round · ${levelLabel(liveSet?.level)}</span></h2>`,
         sessionId: session.id,
         setId: Number(live.dataset.set),
         onProgress: (q) => setHeaderPill(`Extra round · Q${q.position}/${q.total}`),

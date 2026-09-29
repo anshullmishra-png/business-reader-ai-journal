@@ -3,6 +3,7 @@
 import { html, raw, $, toast } from '../lib/dom.js';
 import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
+import { stageHeading } from '../lib/format.js';
 
 const googleUrl = (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
 
@@ -59,7 +60,7 @@ export function renderExplore(container, session, { onChange }) {
   let timer = null;
 
   container.innerHTML = html`
-    <h2 class="section-heading">Explore</h2>
+    ${stageHeading('explore')}
     <p class="hint write-intro">Pull a few threads before the interview. Each link opens a Google search in a new tab.</p>
     <div id="related"></div>
     <div class="start-bar card" id="start-bar"></div>`.toString();

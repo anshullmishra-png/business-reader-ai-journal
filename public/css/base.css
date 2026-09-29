@@ -30,11 +30,11 @@ img, svg { display: block; }
 }
 
 /* 4px scrollbars */
-* { scrollbar-width: thin; scrollbar-color: #E5E7EB transparent; }
+* { scrollbar-width: thin; scrollbar-color: #DDD2BE transparent; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+::-webkit-scrollbar-thumb { background: #DDD2BE; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #C9BCA3; }
 
 /* Icons injected from icons.json */
 .icon { width: 18px; height: 18px; flex: none; display: inline-block; }

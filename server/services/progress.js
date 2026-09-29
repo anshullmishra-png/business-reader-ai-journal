@@ -106,6 +106,24 @@ function frameworkStrength(sessionIds) {
   return { all, weakest };
 }
 
+/** Small numbers for the Today masthead. "This week" starts on Monday. */
+export function getSummary() {
+  const all = db.prepare('SELECT created_at FROM sessions ORDER BY created_at').all();
+  const monday = new Date();
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return {
+    total: all.length,
+    week: all.filter((s) => Date.parse(s.created_at) >= monday.getTime()).length,
+    today: all.filter((s) => Date.parse(s.created_at) >= todayStart.getTime()).length,
+    streak: streak(all),
+    difficulty: getSetting('difficulty_level'),
+    first_at: all[0]?.created_at ?? null,
+  };
+}
+
 export function getProgress(win = '7a') {
   const all = db.prepare('SELECT * FROM sessions ORDER BY created_at').all();
   const scoredAsc = all.filter((s) => s.overall_score != null);

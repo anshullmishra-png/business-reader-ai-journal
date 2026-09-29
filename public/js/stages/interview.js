@@ -22,7 +22,7 @@ const dropDraft = (qid) => { try { localStorage.removeItem(draftKey(qid)); } cat
  * @param {HTMLElement} container
  * @param {{ sessionId:number, setId:number, onProgress:(q)=>void, onDone:()=>void }} o
  */
-export function renderInterview(container, { sessionId, setId, onProgress, onDone }) {
+export function renderInterview(container, { sessionId, setId, onProgress, onDone, heading = '' }) {
   const base = `/sessions/${sessionId}/sets/${setId}`;
   let q = null;
   let deadline = 0;       // in this browser's clock
@@ -94,6 +94,7 @@ export function renderInterview(container, { sessionId, setId, onProgress, onDon
 
     const draft = readDraft(q.id);
     container.innerHTML = html`
+      ${heading}
       <div class="timer" id="timer" role="timer" aria-label="Time left">
         <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
         <span class="timer-label" id="timer-label"></span>

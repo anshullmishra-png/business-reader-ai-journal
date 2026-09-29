@@ -4,14 +4,37 @@ import { icon } from '../lib/icons.js';
 import { setHeader } from '../shell.js';
 import { navigate } from '../router.js';
 import { sessionCard } from '../lib/sessionCard.js';
+import { drawing } from '../lib/drawings.js';
+
+// "The morning edition": a newspaper masthead with the day's numbers.
+// The streak is shown as a fact only; the app never nudges you about it.
+function masthead(sum) {
+  const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const stats = [
+    sum.week
+      ? html`<span><strong>${sum.week}</strong> article${sum.week === 1 ? '' : 's'} read this week</span>`
+      : html`<span>No articles yet this week</span>`,
+    sum.streak > 1 ? html`<span><strong>${sum.streak}-day</strong> reading streak</span>` : '',
+    html`<span>Difficulty <strong>${sum.difficulty}</strong>/10</span>`,
+  ].filter(Boolean);
+  return html`
+    <header class="masthead">
+      <div class="masthead-top">
+        <span>No. ${Math.max(1, sum.total)}</span>
+        <span>${date}</span>
+        <span>Local edition</span>
+      </div>
+      <h1 class="masthead-title">The Morning Edition</h1>
+      <div class="masthead-stats">${stats}</div>
+    </header>`;
+}
 
 export default async function render(el) {
   setHeader({ title: 'Today' });
-  const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  const sum = await api('/summary').catch(() => ({ total: 0, week: 0, today: 0, streak: 0, difficulty: 3 }));
 
   el.innerHTML = html`
-    <h1 class="page-title">Today</h1>
-    <div class="meta-row"><span>${date}</span></div>
+    ${masthead(sum)}
 
     <section class="section">
       <div class="bento">
@@ -123,7 +146,7 @@ export default async function render(el) {
     if (!list) return;
     $('#today-list', el).innerHTML = list.length
       ? html`${list.map(sessionCard)}`.toString()
-      : html`<div class="empty">${raw(icon('notebook-pen'))}
+      : html`<div class="empty">${drawing('newspaper')}
           <div class="empty-title">Nothing read yet today</div>
           Paste a link above, or send an article from your browser with the extension.</div>`.toString();
   }

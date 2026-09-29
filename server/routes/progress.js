@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { getProgress } from '../services/progress.js';
+import { getProgress, getSummary } from '../services/progress.js';
 import { checkWeeklyReview, listReviews, reviewStatus, lastFailedReview } from '../services/reviews.js';
 
 export const progressRouter = Router();
+
+progressRouter.get('/summary', (_req, res) => {
+  res.json(getSummary());
+});
 
 progressRouter.get('/progress', (req, res) => {
   const win = z.enum(['7d', '7a', 'all']).default('7a').parse(req.query.window);
