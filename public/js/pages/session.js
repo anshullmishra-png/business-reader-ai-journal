@@ -81,12 +81,12 @@ export default async function render(el, { id }) {
     </div>
     ${s.url ? html`<p style="margin-top:14px"><a class="link-quiet" href="${s.url}" target="_blank" rel="noopener noreferrer">${raw(icon('external-link'))}Read on the original site</a></p>` : ''}
 
+    <section class="section" id="stage"></section>
+
     <section class="section" data-hide-in-interview>
       <h2 class="section-heading">Tags</h2>
       <div class="card" id="tags"></div>
     </section>
-
-    <section class="section" id="stage"></section>
 
     <section class="section" data-hide-in-interview>
       <button class="btn btn-ghost btn-sm" type="button" data-action="delete">${raw(icon('trash-2'))}Delete this session</button>
