@@ -11,6 +11,12 @@ import { getSetting } from '../services/settings.js';
 import { relatedReading } from '../ai/prompts/relatedReading.js';
 import { saveRelated, markRelatedFailed } from '../services/related.js';
 import { evaluateSet, markEvaluationFailed } from '../services/evaluation.js';
+import { writeReview } from '../services/reviews.js';
+
+registerHandler('weekly_review', {
+  run: (job) => writeReview(job.payload),
+  fail: () => {}, // the failed job row is enough; the next app open retries
+});
 
 // Main interview and extra rounds share the evaluator; only the prompt differs.
 for (const task of ['evaluate_session', 'evaluate_extra']) {

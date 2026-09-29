@@ -81,6 +81,21 @@ export const TermEntry = z.object({
 
 export const MoreExamples = z.object({ examples: z.array(Example).length(3) });
 
+// ---------- Weekly review ----------
+const Point = z.object({
+  point: short(160),
+  evidence: short(260).describe('The numbers or sessions that back this up'),
+});
+
+export const WeeklyReview = z.object({
+  headline: short(140).describe('One blunt line summing up the week'),
+  improved: z.array(Point).min(1).max(3),
+  still_weak: z.array(Point).min(1).max(3),
+  patterns: z.array(short(260)).min(1).max(3).describe('Patterns across this week\'s articles and answers'),
+  goals: z.array(short(200)).length(3).describe('3 specific, measurable goals for next week'),
+  verdict: short(300).describe('Closing verdict line in the interviewer\'s voice'),
+});
+
 // ---------- Evaluation ----------
 export const COMPREHENSION_DIMENSIONS = {
   accuracy: 'Accuracy vs. the article',

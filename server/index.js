@@ -10,6 +10,8 @@ import { aiRouter } from './routes/ai.js';
 import { sessionsRouter } from './routes/sessions.js';
 import { captureRouter } from './routes/capture.js';
 import { glossaryRouter } from './routes/glossary.js';
+import { progressRouter } from './routes/progress.js';
+import { checkWeeklyReview } from './services/reviews.js';
 import { AiError, friendlyMessage } from './ai/claudeBridge.js';
 import { recheckHealth, getHealth } from './ai/health.js';
 import { startJobs } from './jobs/runner.js';
@@ -49,6 +51,7 @@ app.use('/api/ai', aiRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/capture', captureRouter);
 app.use('/api/glossary', glossaryRouter);
+app.use('/api', progressRouter);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ---- Static files + client-side routes ----
@@ -126,4 +129,5 @@ recheckHealth().then(() => {
     error: `  Claude Code check failed: ${h.message ?? 'unknown error'}`,
   }[h.status];
   if (line) console.log(line);
+  if (h.status === 'ready') checkWeeklyReview();
 });

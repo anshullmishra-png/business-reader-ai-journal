@@ -18,6 +18,9 @@ async function boot() {
 
   initRouter();
   await render();
+
+  // A weekly review is written quietly if one is due. No notification.
+  api('/reviews/check', { method: 'POST' }).catch(() => {});
 }
 
 boot().catch((err) => {

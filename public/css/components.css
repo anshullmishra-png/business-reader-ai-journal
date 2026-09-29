@@ -369,6 +369,69 @@ p code, .hint code { background: var(--border-subtle); padding: 1px 5px; border-
 .option[data-state='wrong'] { border-color: var(--score-low); }
 .option[data-state='wrong'] .option-key { background: var(--score-low); border-color: var(--score-low); color: #fff; }
 
+/* ---------- Progress dashboard ---------- */
+.content.content-wide { max-width: 1040px; }
+.progress-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; }
+.segmented { display: inline-flex; padding: 3px; border-radius: var(--r-pill); background: var(--border-subtle); border: 1px solid var(--border); }
+.segmented button {
+  border: none; background: transparent; padding: 7px 14px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: background var(--ease), color var(--ease);
+}
+.segmented button[aria-selected='true'] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-card); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.stats-3 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.stat { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--r-card); padding: 16px 18px; box-shadow: var(--shadow-card); min-width: 0; }
+.stat-hero { grid-column: span 2; }
+.stat-label { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); }
+.stat-value { font-family: var(--font-content); font-weight: 900; font-size: 30px; margin-top: 6px; line-height: 1.1; }
+.stat-xl { font-size: 48px; }
+.stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.delta { font-weight: 700; color: var(--text-muted); }
+.delta.up { color: var(--text); }
+.delta.down { color: var(--text-muted); }
+.readiness-bar { height: 4px; border-radius: 4px; background: var(--border-subtle); margin-top: 12px; overflow: hidden; }
+.readiness-bar div { height: 100%; background: var(--amber); border-radius: 4px; }
+
+.info { position: relative; display: inline-grid; place-items: center; cursor: help; color: var(--text-faint); }
+.info .icon { width: 13px; height: 13px; }
+.info-tip {
+  display: none; position: absolute; top: 20px; left: -8px; z-index: 20; width: 300px;
+  background: var(--accent); color: #E4E4E7; border-radius: 10px; padding: 12px 14px;
+  font-size: 12px; font-weight: 400; text-transform: none; letter-spacing: 0; line-height: 1.5;
+}
+.info-tip strong { display: block; color: #fff; margin-bottom: 6px; }
+.info:hover .info-tip, .info:focus .info-tip { display: grid; gap: 2px; }
+.tip-row { display: flex; justify-content: space-between; gap: 12px; color: #fff; font-weight: 700; margin-top: 6px; }
+.tip-how { color: #A1A1AA; }
+
+.chart-card + .chart-card { margin-top: 12px; }
+.chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.chart-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+.chart-head .chart-title { margin: 0; }
+.chart-wrap { position: relative; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.grid-2 > .card + .card { margin-top: 0; }
+.weak-list { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.weak-list li { display: grid; grid-template-columns: 1fr auto; gap: 0 12px; font-size: 14px; }
+.weak-list .hint { grid-column: 1 / -1; }
+.never-read { display: flex; flex-wrap: wrap; gap: 6px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 8px; border-bottom: 1px solid var(--border-subtle); font-variant-numeric: tabular-nums; }
+.data-table a { color: var(--text); }
+
+/* ---------- Weekly reviews ---------- */
+.review { padding: 28px; }
+.review + .review { margin-top: 16px; }
+.review-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.review-headline { font-family: var(--font-content); font-weight: 900; font-size: 26px; line-height: 1.3; margin: 14px 0 6px; }
+.review-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 24px; }
+.review-points { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.review-points li { display: grid; gap: 2px; font-size: 14px; }
+.review-points span { color: var(--text-muted); }
+.review-list { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-family: var(--font-content); font-size: 16px; line-height: 1.6; }
+
 /* ---------- Screenshot placeholders (extension guide) ---------- */
 .shot-placeholder {
   margin-top: 12px; height: 140px; border-radius: var(--r-card);
