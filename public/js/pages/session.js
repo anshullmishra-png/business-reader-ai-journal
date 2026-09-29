@@ -4,6 +4,8 @@ import { icon } from '../lib/icons.js';
 import { setHeader } from '../shell.js';
 import { navigate } from '../router.js';
 import { SOURCE_LABELS, fmtDate, fmtTime, fmtMaybeDate, plural } from '../lib/format.js';
+import { renderWrite, renderLockedComprehension } from '../stages/write.js';
+import { renderExplore } from '../stages/explore.js';
 
 let meta = null; // { sectors, company_stages }
 const getMeta = async () => (meta ??= await api('/meta'));
@@ -92,12 +94,31 @@ export default async function render(el, { id }) {
   const drawTags = () => { tagsEl.innerHTML = tagsView(s, m).toString(); };
   drawTags();
 
-  // Stage content is built in later phases.
-  $('#stage', el).innerHTML = html`
-    <h2 class="section-heading">Next: write your comprehension</h2>
-    <div class="empty">${raw(icon('notebook-pen'))}
-      <div class="empty-title">Read the article on the original site first</div>
-      The 100–200 word writing stage arrives in phase 4.</div>`.toString();
+  // ---- Stage content ----
+  let stageCleanup = null;
+  const drawStage = () => {
+    stageCleanup?.();
+    stageCleanup = null;
+    setHeader({ title: s.title, pill: STAGE_PILL[s.stage], stage: s.stage });
+    const stageEl = $('#stage', el);
+    stageEl.innerHTML = '';
+
+    if (s.stage === 'write') {
+      stageCleanup = renderWrite(stageEl, s, {
+        onSubmitted: (updated) => { s = updated; drawStage(); $('#main').scrollTop = 0; },
+      });
+      return;
+    }
+    const locked = document.createElement('div');
+    const next = document.createElement('div');
+    next.className = 'section';
+    stageEl.append(locked, next);
+    renderLockedComprehension(locked, s);
+    if (s.stage === 'explore') {
+      stageCleanup = renderExplore(next, s, { onChange: (fresh) => { s = fresh; } });
+    }
+  };
+  drawStage();
 
   // Poll while tagging runs.
   let timer = null;
@@ -155,5 +176,5 @@ export default async function render(el, { id }) {
     navigate('/');
   });
 
-  return () => clearTimeout(timer);
+  return () => { clearTimeout(timer); stageCleanup?.(); };
 }

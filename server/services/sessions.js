@@ -91,6 +91,26 @@ export function deleteSession(id) {
   db.prepare('DELETE FROM sessions WHERE id = ?').run(id);
 }
 
+/**
+ * Locks the comprehension and moves the session to Explore. Atomic: the UPDATE
+ * only matches while the session is still in the write stage, so a second
+ * submit (or any later edit) gets 409.
+ */
+export function submitComprehension(id, { text, seconds, onLocked }) {
+  const t = now();
+  return db.transaction(() => {
+    const { changes } = db.prepare(`
+      UPDATE sessions SET comprehension_text = ?, comprehension_seconds = ?, comprehension_submitted_at = ?,
+                          stage = 'explore', updated_at = ?
+      WHERE id = ? AND stage = 'write'`).run(text, seconds, t, t, id);
+    if (changes === 0) {
+      requireSession(id);
+      throw httpError(409, 'Your comprehension is already submitted and locked.');
+    }
+    onLocked?.();
+  })();
+}
+
 export function getArticleText(id) {
   return db.prepare('SELECT article_text FROM sessions WHERE id = ?').get(id)?.article_text ?? '';
 }

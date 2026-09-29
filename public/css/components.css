@@ -1,5 +1,6 @@
 /* ---------- Page typography ---------- */
 .page-title {
+  overflow-wrap: break-word;
   font-family: var(--font-content);
   font-weight: 900; font-size: 48px; line-height: 1.08; letter-spacing: -0.03em;
 }
@@ -122,10 +123,14 @@ p code, .hint code { background: var(--border-subtle); padding: 1px 5px; border-
 /* ---------- Session page ---------- */
 .article-title { font-size: 40px; }
 .tag-grid { display: grid; gap: 12px; }
-.tag-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 12px; }
+.tag-row { display: grid; grid-template-columns: 130px minmax(0, 1fr); align-items: center; gap: 12px; }
+@media (max-width: 1279px) {
+  .tag-row { grid-template-columns: 1fr; gap: 4px; }
+  .article-title { font-size: 32px; }
+}
 .tag-label { font-size: 12px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; }
 .tag-values { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
-.tag-pill { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--text); height: 28px; padding: 0 6px 0 12px; }
+.tag-pill { max-width: 100%; white-space: normal; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--text); height: 28px; padding: 0 6px 0 12px; }
 .pill-x {
   display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
   border: none; background: transparent; color: var(--text-faint); cursor: pointer; padding: 0;
@@ -139,11 +144,45 @@ p code, .hint code { background: var(--border-subtle); padding: 1px 5px; border-
 }
 .tag-add { width: 110px; }
 .tag-input { width: 100%; max-width: 360px; border-style: solid; border-color: var(--border-subtle); }
-.tag-select { border-style: solid; border-color: var(--border-subtle); cursor: pointer; }
+.tag-select { border-style: solid; border-color: var(--border-subtle); cursor: pointer; max-width: 100%; }
 .tag-add:focus-visible, .tag-input:focus-visible, .tag-select:focus-visible { border-color: var(--accent); box-shadow: none; border-style: solid; }
 .tag-input:hover, .tag-select:hover { border-color: var(--border); }
 .tag-skeleton { display: flex; gap: 8px; margin-top: 12px; }
 .tag-skeleton .skeleton { border-radius: var(--r-pill); }
+
+/* ---------- Write stage ---------- */
+.write-intro { font-size: 14px; margin-bottom: 18px; }
+.write-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.elapsed { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.elapsed .icon { width: 14px; height: 14px; }
+.editor-wrap {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card);
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+.editor-wrap:focus-within { border-color: var(--accent); box-shadow: 0 12px 32px -18px rgba(24, 24, 27, 0.35); }
+.editor {
+  display: block; width: 100%; min-height: 320px; resize: none; overflow: hidden;
+  border: none; background: transparent; padding: 24px 28px 8px;
+  font-family: var(--font-content); font-size: var(--content-size); line-height: var(--content-leading);
+}
+.editor:focus-visible { box-shadow: none; }
+.editor::placeholder { color: var(--zinc-300); }
+.editor-foot {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 12px 16px 12px 28px; border-top: 1px solid var(--border-subtle);
+}
+.word-count { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.word-count[data-state='under'] { color: var(--text-faint); }
+.word-count[data-state='over'] { color: var(--score-low); }
+.word-count[data-state='ok'] { color: var(--text); }
+
+.locked-meta {
+  display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 14px;
+  font-size: 12px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em;
+}
+.locked-meta .row { gap: 6px; }
+.locked-meta .icon { width: 13px; height: 13px; }
+.locked-text { white-space: pre-wrap; }
 
 /* ---------- Screenshot placeholders (extension guide) ---------- */
 .shot-placeholder {

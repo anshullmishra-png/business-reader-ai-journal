@@ -97,7 +97,7 @@
 .step-sep { width: 20px; height: 1px; background: var(--border); }
 
 /* ---------- Main ---------- */
-.main { grid-area: main; overflow-y: auto; min-height: 0; }
+.main { grid-area: main; overflow-y: auto; overflow-x: hidden; min-height: 0; }
 .content { max-width: var(--content-max); margin: 0 auto; padding: 56px 24px 120px; }
 
 /* ---------- Dictionary panel ---------- */

@@ -36,6 +36,28 @@ export const COMPANY_STAGES = [
   'Multiple / industry-wide',
 ];
 
+export const QUESTION_TYPES = ['mcq', 'short', 'structured', 'estimation'];
+
+// Every interview question is tagged with exactly one of these.
+export const FRAMEWORKS = [
+  'First principles',
+  'MECE',
+  'Issue trees',
+  "Porter's Five Forces",
+  'Unit economics',
+  'Jobs-to-be-Done',
+  'Second-order thinking',
+  'SWOT',
+  'Moats',
+  '2x2 matrices',
+  'Value chain',
+  'Market sizing',
+  'Pricing strategy',
+  'Business model canvas',
+  'Network effects',
+  '80/20',
+];
+
 export const SOURCES = {
   the_ken: 'The Ken',
   the_arc: 'The Arc',

@@ -4,8 +4,18 @@ import { TagsEdit } from '../ai/schemas.js';
 import { fetchArticle, ExtractError, countWords } from '../services/extract.js';
 import {
   createSession, getSession, requireSession, listSessions, listToday, setTags, retryTagging,
-  deleteSession, httpError, MIN_ARTICLE_WORDS,
+  deleteSession, submitComprehension, httpError, MIN_ARTICLE_WORDS,
 } from '../services/sessions.js';
+import { comprehensionWords, MIN_WORDS, MAX_WORDS } from '../services/words.js';
+import { createMainSet, getMainSet, retryGeneration } from '../services/questions.js';
+
+// Session plus the status of its main question set (never the questions themselves).
+function sessionView(id) {
+  const s = requireSession(id);
+  const set = getMainSet(id);
+  s.main_set = set ? { id: set.id, gen_status: set.gen_status, status: set.status } : null;
+  return s;
+}
 
 export const sessionsRouter = Router();
 
@@ -59,7 +69,33 @@ sessionsRouter.post('/', async (req, res) => {
 });
 
 sessionsRouter.get('/:id', (req, res) => {
-  res.json(requireSession(Id.parse(req.params.id)));
+  res.json(sessionView(Id.parse(req.params.id)));
+});
+
+// ---- Stage 2: Write ----
+const Comprehension = z.object({
+  text: z.string().max(5000),
+  seconds: z.number().int().min(0).max(24 * 3600),
+});
+
+sessionsRouter.post('/:id/comprehension', (req, res) => {
+  const id = Id.parse(req.params.id);
+  const { text, seconds } = Comprehension.parse(req.body);
+  const words = comprehensionWords(text);
+  if (words < MIN_WORDS || words > MAX_WORDS) {
+    throw httpError(422, `Your comprehension must be ${MIN_WORDS}–${MAX_WORDS} words. It's ${words}.`, { code: 'word_limit' });
+  }
+  // Question generation starts the moment the comprehension locks.
+  submitComprehension(id, { text: text.trim(), seconds, onLocked: () => createMainSet(id) });
+  res.json(sessionView(id));
+});
+
+sessionsRouter.post('/:id/questions/retry', (req, res) => {
+  const id = Id.parse(req.params.id);
+  const set = getMainSet(id);
+  if (!set) throw httpError(409, 'Questions are generated after you submit your comprehension.');
+  retryGeneration(set.id);
+  res.json(sessionView(id));
 });
 
 // Tags stay editable at every stage: they're metadata, not a graded answer.
@@ -67,13 +103,13 @@ sessionsRouter.put('/:id/tags', (req, res) => {
   const id = Id.parse(req.params.id);
   requireSession(id);
   setTags(id, TagsEdit.parse(req.body), 'ready');
-  res.json(getSession(id));
+  res.json(sessionView(id));
 });
 
 sessionsRouter.post('/:id/tags/retry', (req, res) => {
   const id = Id.parse(req.params.id);
   retryTagging(id);
-  res.json(getSession(id));
+  res.json(sessionView(id));
 });
 
 sessionsRouter.delete('/:id', (req, res) => {

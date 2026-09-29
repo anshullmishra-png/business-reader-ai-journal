@@ -187,7 +187,9 @@ async function attempt({ task, model, system, prompt, jsonSchema, timeoutMs }) {
 export function runTask({ task, tier = 'light', system, prompt, schema, timeoutMs }) {
   const model = config.ai?.models?.[tier] ?? tier;
   const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' });
-  const base = { task, model, system, jsonSchema, timeoutMs: timeoutMs ?? config.ai?.timeoutMs ?? 120000 };
+  const configured = config.ai?.timeoutMs;
+  const tierTimeout = typeof configured === 'number' ? configured : configured?.[tier];
+  const base = { task, model, system, jsonSchema, timeoutMs: timeoutMs ?? tierTimeout ?? 120000 };
 
   return schedule(async () => {
     let retriedTransport = false;
