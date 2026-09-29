@@ -315,6 +315,60 @@ p code, .hint code { background: var(--border-subtle); padding: 1px 5px; border-
 .extra-body { padding: 0 20px 20px; }
 .extra-levels { flex-wrap: wrap; margin-top: 16px; }
 
+/* ---------- Dictionary entries (panel + glossary) ---------- */
+.entry-term { font-family: var(--font-content); font-weight: 900; font-size: 26px; line-height: 1.2; letter-spacing: -0.01em; margin-bottom: 10px; }
+.entry-def, .entry-why { font-family: var(--font-content); font-size: 17px; line-height: 1.7; }
+.entry-formula {
+  margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border-subtle);
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 13px; overflow-wrap: anywhere;
+}
+.entry-label {
+  margin: 20px 0 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint);
+}
+.entry-examples { margin: 0 0 10px; padding-left: 18px; font-family: var(--font-content); font-size: 15px; line-height: 1.65; }
+.entry-examples li + li { margin-top: 6px; }
+.entry-related { display: flex; flex-wrap: wrap; gap: 6px; }
+.related-term { cursor: pointer; padding: 0 12px; }
+.related-term:hover { background: var(--surface-hover); border-color: var(--zinc-400); }
+.entry-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 20px; font-size: 12px; color: var(--text-faint); }
+.entry-meta a { color: var(--text-muted); }
+.entry-saved { display: flex; align-items: center; gap: 6px; margin-top: 16px; }
+.entry-saved .icon { width: 14px; height: 14px; }
+
+/* ---------- Glossary page ---------- */
+.quiz-intro { display: flex; justify-content: space-between; gap: 24px; align-items: center; }
+.quiz-intro .hint { margin: 4px 0 14px; max-width: 360px; }
+.boxes { display: flex; gap: 10px; align-items: flex-end; flex: none; }
+.box-col { display: grid; justify-items: center; gap: 4px; }
+.box-bar { width: 22px; height: 64px; border-radius: 5px; background: var(--border-subtle); display: flex; align-items: flex-end; overflow: hidden; }
+.box-fill { width: 100%; background: var(--zinc-600); }
+.box-n { font-size: 13px; font-weight: 700; }
+.box-label { font-size: 10px; color: var(--text-faint); font-weight: 700; text-transform: uppercase; }
+.glossary-filters { display: flex; gap: 8px; margin: 24px 0 16px; flex-wrap: wrap; }
+.glossary-filters select.input { flex: none; width: auto; max-width: 200px; padding-right: 8px; }
+.glossary-filters .dict-input-wrap { min-width: 200px; }
+.g-item { padding: 0; }
+.g-item.is-open { padding-bottom: 20px; }
+.g-item .entry, .g-item > .btn { margin: 0 24px; }
+.g-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px; width: 100%;
+  padding: 16px 24px 4px; background: none; border: none; cursor: pointer; text-align: left;
+}
+.g-term { font-family: var(--font-content); font-weight: 900; font-size: 19px; }
+.g-meta { flex: none; font-size: 12px; color: var(--text-faint); font-weight: 700; }
+.g-snippet { padding: 0 24px 16px; color: var(--text-muted); font-size: 14px; }
+.g-item.is-open .g-head { padding-bottom: 12px; }
+
+.quiz-card { padding: 28px; }
+.quiz-term { font-family: var(--font-content); font-weight: 900; font-size: 34px; margin: 10px 0 22px; }
+.quiz-def { font-family: var(--font-content); font-size: 19px; line-height: 1.65; }
+.quiz-score { font-family: var(--font-content); font-weight: 900; font-size: 56px; margin: 8px 0 12px; }
+.quiz-moves { margin: 0 0 20px; padding-left: 18px; color: var(--text-muted); font-size: 14px; }
+.option[data-state='correct'] { border-color: var(--score-high); }
+.option[data-state='correct'] .option-key { background: var(--score-high); border-color: var(--score-high); color: #fff; }
+.option[data-state='wrong'] { border-color: var(--score-low); }
+.option[data-state='wrong'] .option-key { background: var(--score-low); border-color: var(--score-low); color: #fff; }
+
 /* ---------- Screenshot placeholders (extension guide) ---------- */
 .shot-placeholder {
   margin-top: 12px; height: 140px; border-radius: var(--r-card);

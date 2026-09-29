@@ -9,6 +9,8 @@ import { settingsRouter } from './routes/settings.js';
 import { aiRouter } from './routes/ai.js';
 import { sessionsRouter } from './routes/sessions.js';
 import { captureRouter } from './routes/capture.js';
+import { glossaryRouter } from './routes/glossary.js';
+import { AiError, friendlyMessage } from './ai/claudeBridge.js';
 import { recheckHealth, getHealth } from './ai/health.js';
 import { startJobs } from './jobs/runner.js';
 import { SECTORS, COMPANY_STAGES, SOURCES } from './ai/taxonomy.js';
@@ -46,6 +48,7 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/capture', captureRouter);
+app.use('/api/glossary', glossaryRouter);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ---- Static files + client-side routes ----
@@ -60,6 +63,9 @@ app.use((req, res, next) => {
 app.use((err, _req, res, _next) => {
   if (err instanceof ZodError) {
     return res.status(400).json({ error: 'Invalid input', issues: err.issues });
+  }
+  if (err instanceof AiError) {
+    return res.status(503).json({ error: friendlyMessage(err), code: err.code });
   }
   if (err.type === 'entity.too.large') return res.status(413).json({ error: 'That article is too long.' });
   if (err.status) {

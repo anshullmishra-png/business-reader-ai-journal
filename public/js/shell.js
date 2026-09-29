@@ -1,6 +1,8 @@
 // App chrome shared by every page: header, stepper, sidebar profile, dictionary panel.
-import { $, $$, html, raw, esc } from './lib/dom.js';
+import { $, $$, html, raw, esc, toast } from './lib/dom.js';
 import { icon } from './lib/icons.js';
+import { api } from './lib/api.js';
+import { entryHtml, entrySkeleton } from './lib/entry.js';
 
 export const STAGES = [
   { key: 'add', label: 'Add' },
@@ -89,8 +91,33 @@ export function initDictionary() {
   $('#dict-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const term = $('#dict-input').value.trim();
-    if (!term) return;
-    $('#dict-body').innerHTML = html`<p class="dict-empty">Lookups for “${term}” arrive in a later build phase.</p>`.toString();
+    if (term) lookupTerm(term);
+  });
+
+  // Entries can appear in the panel or on the glossary page; handle their buttons everywhere.
+  document.addEventListener('click', async (e) => {
+    const rel = e.target.closest('[data-lookup]');
+    if (rel) {
+      setOpen(true);
+      $('#dict-input').value = rel.dataset.lookup;
+      lookupTerm(rel.dataset.lookup);
+      return;
+    }
+    const more = e.target.closest('[data-more-examples]');
+    if (more) {
+      more.disabled = true;
+      more.innerHTML = `${icon('loader-circle', 'spin')}Finding more examples…`;
+      try {
+        const t = await api(`/glossary/${more.dataset.moreExamples}/more-examples`, { method: 'POST' });
+        const article = more.closest('.entry');
+        const compact = !article.querySelector('.entry-term');
+        article.outerHTML = entryHtml(t, { compact }).toString();
+      } catch (err) {
+        toast(err.message);
+        more.disabled = false;
+        more.innerHTML = `${icon('plus')}More examples`;
+      }
+    }
   });
 
   // "/" focuses the dictionary unless the user is typing somewhere.
@@ -104,4 +131,29 @@ export function initDictionary() {
     }
     if (e.key === 'Escape' && app.dataset.dictOpen === 'true') setOpen(false);
   });
+}
+
+// Looks a term up: saved terms come back instantly with no AI call.
+let lookupSeq = 0;
+export async function lookupTerm(term) {
+  const seq = ++lookupSeq;
+  const body = $('#dict-body');
+  // Show the skeleton only if the answer isn't instant (i.e. it's a new term).
+  const skeletonTimer = setTimeout(() => {
+    if (seq === lookupSeq) body.innerHTML = entrySkeleton(term).toString();
+  }, 150);
+  const sessionId = Number(location.pathname.match(/^\/session\/(\d+)/)?.[1]) || null;
+  try {
+    const { term: t, cached } = await api('/glossary/lookup', { method: 'POST', body: { term, session_id: sessionId } });
+    if (seq !== lookupSeq) return;
+    body.innerHTML = html`
+      ${entryHtml(t)}
+      <p class="hint entry-saved">${raw(icon(cached ? 'book-a' : 'circle-check'))}${cached ? 'From your glossary' : 'Saved to your glossary'}</p>`.toString();
+    body.scrollTop = 0;
+  } catch (err) {
+    if (seq !== lookupSeq) return;
+    body.innerHTML = html`<p class="dict-empty">${err.message}</p>`.toString();
+  } finally {
+    clearTimeout(skeletonTimer);
+  }
 }

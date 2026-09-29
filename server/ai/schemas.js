@@ -56,6 +56,31 @@ export const QuestionSet = z.object({ questions: z.array(Question).length(10) })
     }
   });
 
+// ---------- Dictionary ----------
+export const GLOSSARY_SECTORS = ['General business', ...SECTORS.filter((s) => s !== 'Other')];
+
+const Example = z.object({
+  company: short(60),
+  example: short(260).describe('One or two sentences showing the term in action at this company'),
+});
+
+export const TermEntry = z.object({
+  is_business_term: z.boolean().describe('false if this is not a business, finance, strategy or economics term'),
+  display_term: short(80).describe('The term in its standard written form, e.g. "Customer acquisition cost (CAC)"'),
+  definition: z.string().trim().max(600).describe('Plain English, 2-3 sentences'),
+  formula: z.string().trim().max(200).nullable().describe('e.g. "CAC = total sales and marketing spend / new customers". null if none'),
+  examples: z.array(Example).max(3).describe('Exactly 3 when is_business_term is true: mix Indian and global companies'),
+  why_it_matters: z.string().trim().max(400).describe('Why a Chief of Staff should care, 1-2 sentences'),
+  related: z.array(short(60)).max(3).describe('3 closely related terms'),
+  sector: z.enum(GLOSSARY_SECTORS).describe('"General business" unless the term belongs to one sector'),
+}).superRefine((v, ctx) => {
+  if (v.is_business_term && (v.examples.length !== 3 || v.related.length !== 3 || v.definition.length < 20)) {
+    ctx.addIssue({ code: 'custom', path: ['examples'], message: 'Business terms need a definition, exactly 3 examples and 3 related terms' });
+  }
+});
+
+export const MoreExamples = z.object({ examples: z.array(Example).length(3) });
+
 // ---------- Evaluation ----------
 export const COMPREHENSION_DIMENSIONS = {
   accuracy: 'Accuracy vs. the article',
