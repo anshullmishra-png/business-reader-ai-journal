@@ -121,6 +121,9 @@ export function submitComprehension(id, { text, seconds, onLocked }) {
 export function startInterview(id) {
   const t = now();
   return db.transaction(() => {
+    const { stage } = requireSession(id);
+    if (stage === 'write') throw httpError(409, 'Submit your comprehension first.');
+    if (stage !== 'explore') throw httpError(409, 'The interview has already started.');
     const set = db.prepare("SELECT id, gen_status FROM question_sets WHERE session_id = ? AND kind = 'main'").get(id);
     if (!set || set.gen_status !== 'ready') {
       throw httpError(409, 'Your questions are still being prepared.');
