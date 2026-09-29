@@ -9,6 +9,7 @@ import {
 import { comprehensionWords, MIN_WORDS, MAX_WORDS } from '../services/words.js';
 import { createMainSet, getMainSet, retryGeneration } from '../services/questions.js';
 import { ensureRelated, listRelated, setRelatedDone } from '../services/related.js';
+import { currentQuestion, answerQuestion } from '../services/interview.js';
 
 // Session plus related reading and the status of its main question set
 // (never the questions themselves).
@@ -117,6 +118,25 @@ sessionsRouter.post('/:id/interview/start', (req, res) => {
   const id = Id.parse(req.params.id);
   startInterview(id);
   res.json(sessionView(id));
+});
+
+// ---- Stage 4: Interview (also used by extra rounds) ----
+sessionsRouter.get('/:id/sets/:setId/current', (req, res) => {
+  res.json(currentQuestion(Id.parse(req.params.id), Id.parse(req.params.setId)));
+});
+
+const Answer = z.object({
+  question_id: z.number().int().positive(),
+  answer: z.string().max(3000).nullable(),
+  auto_submitted: z.boolean().default(false),
+});
+
+sessionsRouter.post('/:id/sets/:setId/answer', (req, res) => {
+  const id = Id.parse(req.params.id);
+  const setId = Id.parse(req.params.setId);
+  const a = Answer.parse(req.body);
+  const result = answerQuestion(id, setId, { questionId: a.question_id, answer: a.answer, autoSubmitted: a.auto_submitted });
+  res.json({ ...result, next: currentQuestion(id, setId) });
 });
 
 sessionsRouter.post('/:id/questions/retry', (req, res) => {

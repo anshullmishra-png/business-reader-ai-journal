@@ -6,6 +6,7 @@ import { navigate } from '../router.js';
 import { SOURCE_LABELS, fmtDate, fmtTime, fmtMaybeDate, plural } from '../lib/format.js';
 import { renderWrite, renderLockedComprehension } from '../stages/write.js';
 import { renderExplore } from '../stages/explore.js';
+import { renderInterview } from '../stages/interview.js';
 
 let meta = null; // { sectors, company_stages }
 const getMeta = async () => (meta ??= await api('/meta'));
@@ -79,14 +80,14 @@ export default async function render(el, { id }) {
     </div>
     ${s.url ? html`<p style="margin-top:14px"><a class="link-quiet" href="${s.url}" target="_blank" rel="noopener noreferrer">${raw(icon('external-link'))}Read on the original site</a></p>` : ''}
 
-    <section class="section">
+    <section class="section" data-hide-in-interview>
       <h2 class="section-heading">Tags</h2>
       <div class="card" id="tags"></div>
     </section>
 
     <section class="section" id="stage"></section>
 
-    <section class="section">
+    <section class="section" data-hide-in-interview>
       <button class="btn btn-ghost btn-sm" type="button" data-action="delete">${raw(icon('trash-2'))}Delete this session</button>
     </section>`.toString();
 
@@ -102,6 +103,21 @@ export default async function render(el, { id }) {
     setHeader({ title: s.title, pill: STAGE_PILL[s.stage], stage: s.stage });
     const stageEl = $('#stage', el);
     stageEl.innerHTML = '';
+    // Nothing but the question on screen during the interview.
+    for (const sec of el.querySelectorAll('[data-hide-in-interview]')) sec.hidden = s.stage === 'interview';
+
+    if (s.stage === 'interview') {
+      stageCleanup = renderInterview(stageEl, {
+        sessionId: s.id,
+        setId: s.main_set.id,
+        onProgress: (q) => setHeader({ title: s.title, pill: `Interview · Q${q.position}/${q.total}`, stage: 'interview' }),
+        onDone: async () => {
+          s = await api(`/sessions/${id}`);
+          setTimeout(() => { drawStage(); $('#main').scrollTop = 0; }, 900);
+        },
+      });
+      return;
+    }
 
     if (s.stage === 'write') {
       stageCleanup = renderWrite(stageEl, s, {
@@ -121,9 +137,9 @@ export default async function render(el, { id }) {
           if (stageChanged) { drawStage(); $('#main').scrollTop = 0; }
         },
       });
-    } else if (s.stage === 'interview') {
-      next.innerHTML = html`<div class="empty">${raw(icon('clock'))}
-        <div class="empty-title">Interview in progress</div>The timed interview screen arrives in phase 6.</div>`.toString();
+    } else if (s.stage === 'verdict') {
+      next.innerHTML = html`<div class="card"><p class="status-line">${raw(icon('loader-circle', 'spin'))}
+        Interview complete. Scoring and the verdict screen arrive in phase 7.</p></div>`.toString();
     }
   };
   drawStage();

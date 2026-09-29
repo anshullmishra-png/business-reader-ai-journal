@@ -208,6 +208,45 @@ p code, .hint code { background: var(--border-subtle); padding: 1px 5px; border-
   position: sticky; bottom: 16px;
 }
 
+/* ---------- Interview ---------- */
+.timer { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+.timer-track { flex: 1; height: 3px; background: var(--border-subtle); border-radius: 3px; overflow: hidden; }
+.timer-fill {
+  height: 100%; width: 100%; background: var(--zinc-400);
+  transform-origin: left center; transition: transform 100ms linear, background 300ms ease-in-out;
+}
+.timer[data-warn='true'] .timer-fill, .timer-track[data-warn='true'] .timer-fill { background: var(--accent); }
+.timer-track[data-warn='true'] + .timer-label { color: var(--text); }
+.timer-label { width: 36px; text-align: right; font-size: 13px; font-weight: 700; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.q-count { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); }
+.q-prompt {
+  font-family: var(--font-content); font-weight: 400; font-size: 26px; line-height: 1.5;
+  margin: 10px 0 32px; overflow-wrap: break-word;
+}
+.q-bento .bento-body { padding-top: 14px; }
+.q-bento .pill .icon { width: 12px; height: 12px; }
+.answer {
+  display: block; width: 100%; min-height: 150px; resize: vertical; border: none; background: transparent; padding: 4px 0;
+  font-family: var(--font-content); font-size: 18px; line-height: 1.7;
+}
+.answer:focus-visible { box-shadow: none; }
+.answer::placeholder { color: var(--zinc-300); }
+.options { display: grid; gap: 8px; }
+.option {
+  display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 14px; border-radius: var(--r-card); border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 15px; line-height: 1.5;
+  transition: border-color var(--ease), background var(--ease);
+}
+.option:hover:not(:disabled) { background: var(--surface-hover); }
+.option[aria-checked='true'] { border-color: var(--accent); background: var(--border-subtle); }
+.option-key {
+  flex: none; width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--border);
+  display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--text-muted);
+}
+.option[aria-checked='true'] .option-key { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.q-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; }
+
 /* ---------- Screenshot placeholders (extension guide) ---------- */
 .shot-placeholder {
   margin-top: 12px; height: 140px; border-radius: var(--r-card);
