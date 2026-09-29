@@ -1,5 +1,6 @@
 // Registers every background job type. Imported once by server/index.js.
 import { registerHandler } from './runner.js';
+import { db } from '../db/index.js';
 import { runTask } from '../ai/claudeBridge.js';
 import { tagArticle } from '../ai/prompts/tagArticle.js';
 import { generateQuestions } from '../ai/prompts/generateQuestions.js';
@@ -9,6 +10,15 @@ import { getSet, saveQuestions, setGenStatus, recentHistory } from '../services/
 import { getSetting } from '../services/settings.js';
 import { relatedReading } from '../ai/prompts/relatedReading.js';
 import { saveRelated, markRelatedFailed } from '../services/related.js';
+import { evaluateSet, markEvaluationFailed } from '../services/evaluation.js';
+
+// Main interview and extra rounds share the evaluator; only the prompt differs.
+for (const task of ['evaluate_session', 'evaluate_extra']) {
+  registerHandler(task, {
+    run: (job) => evaluateSet(job.set_id),
+    fail: (job) => markEvaluationFailed(job.set_id),
+  });
+}
 
 registerHandler('related_reading', {
   async run(job) {
@@ -48,7 +58,11 @@ registerHandler('generate_questions', {
     const set = getSet(job.set_id);
     if (!s || !set) return;
     const history = recentHistory(s.id);
+    const avoid = db.prepare(`SELECT q.prompt FROM questions q JOIN question_sets qs ON qs.id = q.set_id
+                              WHERE qs.session_id = ? AND qs.id != ?`).all(s.id, set.id).map((r) => r.prompt);
     const { questions } = await runTask(generateQuestions({
+      avoid,
+      task: set.kind === 'extra' ? 'generateExtraRound' : 'generateQuestions',
       title: s.title,
       source: SOURCES[s.source],
       text: getArticleText(s.id),

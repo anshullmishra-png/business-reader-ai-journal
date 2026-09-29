@@ -7,6 +7,7 @@ import { SOURCE_LABELS, fmtDate, fmtTime, fmtMaybeDate, plural } from '../lib/fo
 import { renderWrite, renderLockedComprehension } from '../stages/write.js';
 import { renderExplore } from '../stages/explore.js';
 import { renderInterview } from '../stages/interview.js';
+import { renderVerdict } from '../stages/verdict.js';
 
 let meta = null; // { sectors, company_stages }
 const getMeta = async () => (meta ??= await api('/meta'));
@@ -119,6 +120,18 @@ export default async function render(el, { id }) {
       return;
     }
 
+    if (s.stage === 'verdict') {
+      const verdictEl = document.createElement('div');
+      const lockedEl = document.createElement('div');
+      lockedEl.className = 'section';
+      stageEl.append(verdictEl, lockedEl);
+      stageCleanup = renderVerdict(verdictEl, s, {
+        setHeaderPill: (pill) => setHeader({ title: s.title, pill: pill ?? STAGE_PILL.verdict, stage: 'verdict' }),
+      });
+      renderLockedComprehension(lockedEl, s);
+      return;
+    }
+
     if (s.stage === 'write') {
       stageCleanup = renderWrite(stageEl, s, {
         onSubmitted: (updated) => { s = updated; drawStage(); $('#main').scrollTop = 0; },
@@ -137,9 +150,6 @@ export default async function render(el, { id }) {
           if (stageChanged) { drawStage(); $('#main').scrollTop = 0; }
         },
       });
-    } else if (s.stage === 'verdict') {
-      next.innerHTML = html`<div class="card"><p class="status-line">${raw(icon('loader-circle', 'spin'))}
-        Interview complete. Scoring and the verdict screen arrive in phase 7.</p></div>`.toString();
     }
   };
   drawStage();

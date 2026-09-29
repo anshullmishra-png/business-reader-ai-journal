@@ -56,6 +56,58 @@ export const QuestionSet = z.object({ questions: z.array(Question).length(10) })
     }
   });
 
+// ---------- Evaluation ----------
+export const COMPREHENSION_DIMENSIONS = {
+  accuracy: 'Accuracy vs. the article',
+  condensation: 'Condensation and clarity',
+  structure: 'Structure',
+  insight: 'Insight ("so what")',
+  omissions: "Noticing what the article didn't say",
+};
+
+const score = z.number().min(0).max(10);
+
+const QuestionEval = z.object({
+  position: z.number().int().min(1).max(10),
+  score,
+  feedback: short(400).describe('Blunt, specific critique of THIS answer. 1-3 short sentences.'),
+  model_answer: short(900).describe('What a strong candidate would have written in the time allowed.'),
+});
+
+const WorkOnNext = z.array(z.object({
+  title: short(80),
+  detail: short(300).describe('A concrete drill or habit, not a platitude'),
+  target: short(60).describe('The framework or comprehension dimension this targets'),
+})).length(2);
+
+/**
+ * Built per call: the evaluator must return exactly the open-ended questions
+ * it was given (MCQs are scored by the app).
+ */
+export function makeEvaluationSchema(positions, { withComprehension }) {
+  const shape = {
+    questions: z.array(QuestionEval).length(positions.length),
+    summary: short(300).describe('One or two sentence verdict in the interviewer\'s voice'),
+    work_on_next: WorkOnNext,
+  };
+  if (withComprehension) {
+    shape.comprehension = z.array(z.object({
+      dimension: z.enum(Object.keys(COMPREHENSION_DIMENSIONS)),
+      score,
+      critique: short(240).describe('One line'),
+    })).length(5);
+  }
+  return z.object(shape).superRefine((v, ctx) => {
+    const got = v.questions.map((q) => q.position).sort((a, b) => a - b).join(',');
+    if (got !== [...positions].sort((a, b) => a - b).join(',')) {
+      ctx.addIssue({ code: 'custom', path: ['questions'], message: `Evaluate exactly positions ${positions.join(', ')}` });
+    }
+    if (withComprehension && new Set(v.comprehension.map((c) => c.dimension)).size !== 5) {
+      ctx.addIssue({ code: 'custom', path: ['comprehension'], message: 'Score each of the 5 dimensions exactly once' });
+    }
+  });
+}
+
 // What the user may save when editing tags by hand (they can remove themes).
 export const TagsEdit = Tags.extend({
   themes: z.array(short(40)).max(5),

@@ -43,7 +43,10 @@ Exactly 1 or 2 questions must connect THIS article to one of these earlier artic
  * @param {number} o.timerSeconds seconds the candidate gets per question
  * @param {Array} o.history   compact summaries of recent sessions
  */
-export function generateQuestions({ title, source, text, difficulty, timerSeconds, history, task = 'generateQuestions' }) {
+export function generateQuestions({ title, source, text, difficulty, timerSeconds, history, avoid = [], task = 'generateQuestions' }) {
+  const avoidBlock = avoid.length
+    ? `\nALREADY ASKED about this article (write new questions; don't repeat or rephrase these):\n${avoid.map((p) => `- ${p}`).join('\n')}\n`
+    : '';
   const body = text.length > MAX_ARTICLE_CHARS ? `${text.slice(0, MAX_ARTICLE_CHARS)}\n[…truncated]` : text;
   return {
     task,
@@ -75,7 +78,7 @@ GROUNDING:
   (questions are shown one at a time, in order).
 
 ${historyBlock(history)}
-
+${avoidBlock}
 Source: ${source}
 Title: ${title}
 

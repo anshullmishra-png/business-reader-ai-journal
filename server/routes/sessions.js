@@ -10,6 +10,8 @@ import { comprehensionWords, MIN_WORDS, MAX_WORDS } from '../services/words.js';
 import { createMainSet, getMainSet, retryGeneration } from '../services/questions.js';
 import { ensureRelated, listRelated, setRelatedDone } from '../services/related.js';
 import { currentQuestion, answerQuestion } from '../services/interview.js';
+import { getResults, createExtraSet, startExtraSet, EXTRA_LEVELS } from '../services/results.js';
+import { retryEvaluation } from '../services/evaluation.js';
 
 // Session plus related reading and the status of its main question set
 // (never the questions themselves).
@@ -137,6 +139,32 @@ sessionsRouter.post('/:id/sets/:setId/answer', (req, res) => {
   const a = Answer.parse(req.body);
   const result = answerQuestion(id, setId, { questionId: a.question_id, answer: a.answer, autoSubmitted: a.auto_submitted });
   res.json({ ...result, next: currentQuestion(id, setId) });
+});
+
+// ---- Stage 5: Verdict, and Stage 6: extra rounds ----
+sessionsRouter.get('/:id/results', (req, res) => {
+  res.json(getResults(Id.parse(req.params.id)));
+});
+
+sessionsRouter.post('/:id/sets/:setId/evaluation/retry', (req, res) => {
+  const id = Id.parse(req.params.id);
+  const setId = Id.parse(req.params.setId);
+  requireSession(id);
+  retryEvaluation(setId);
+  res.json(getResults(id));
+});
+
+sessionsRouter.post('/:id/extra', (req, res) => {
+  const id = Id.parse(req.params.id);
+  const { level } = z.object({ level: z.enum(EXTRA_LEVELS) }).parse(req.body);
+  createExtraSet(id, level);
+  res.status(201).json(getResults(id));
+});
+
+sessionsRouter.post('/:id/sets/:setId/start', (req, res) => {
+  const id = Id.parse(req.params.id);
+  startExtraSet(id, Id.parse(req.params.setId));
+  res.json(getResults(id));
 });
 
 sessionsRouter.post('/:id/questions/retry', (req, res) => {
