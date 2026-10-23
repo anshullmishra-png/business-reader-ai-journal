@@ -1,0 +1,142 @@
+/* Curves, hover states, tooltips and popovers, loading, cursor and focus.
+   Same one-hue palette as the rest; rounded corners replace square ones.
+   Radii: panels 16px, controls 10px, tags 6px. Loaded after components.css. */
+:root { --r-panel: 16px; --r-ctl: 10px; --r-tag: 6px; }
+
+/* ---------- Curves ---------- */
+.card, .empty, .session-main, .verdict-hero, .stat-grid, .stats-grid, .next-grid, .g-list:not(:empty),
+.qr-compare, .info-tip, .profile-menu, .auth-card, .entry-formula, .filter-card { border-radius: var(--r-panel); }
+.btn, .icon-btn, .input, .tag-add, .tag-input, .tag-select, .segmented, .query-link, .editor-wrap,
+.toast, .avatar, .code, .kbd, .profile-btn, .extra-head, .option, .mcq-opt { border-radius: var(--r-ctl); }
+.pill, .tag, .tag-pill, .won-num, .option-key, .src-glyph, p code, .hint code { border-radius: var(--r-tag); }
+.segmented { padding: 3px; gap: 2px; }
+.segmented button { border-radius: 7px; border-right: none; }
+.tracker-node, .pill-x { border-radius: 50%; }
+.strip-day { border-radius: 4px; }
+.meter, .meter span, .readiness-bar, .readiness-bar div, .timer-track, .timer-fill, .word-meter, .word-meter span,
+.ai-wait-bar, .ai-wait-bar span { border-radius: 99px; }
+.dict { border-radius: var(--r-panel) 0 0 var(--r-panel); overflow: hidden; }
+.list-card, .q-card, .extra-card, .g-item, .profile-menu { overflow: hidden; }
+.editor-wrap { overflow: hidden; }
+
+/* Lists of choices become separate rounded rows instead of one ruled stack. */
+.options { border-top: none; gap: 8px; }
+.option { border: 1px solid var(--rule); }
+.mcq-review { border-top: none; gap: 6px; }
+.mcq-opt { border: 1px solid var(--rule); }
+.won-grid { border-top: none; gap: 12px; }
+.won.card { border: 1px solid var(--rule); padding: 18px 20px; }
+.card.g-item + .card.g-item { margin-top: 8px; border-top: 1px solid var(--rule); }
+.g-list:not(:empty) { overflow: hidden; }
+.g-list .card.g-item { border-radius: 0; }
+.g-list .card.g-item + .card.g-item { margin-top: 0; border-top: none; }
+
+/* Ruled grids keep single hairlines inside rounded frames: the 1px gap shows the rule colour. */
+.stat-grid, .stats-grid, .next-grid { border: 1px solid var(--rule); background: var(--rule); gap: 1px; overflow: hidden; }
+.stat-grid > .card, .stat, .next-step { border: none !important; background: var(--ground); border-radius: 0; }
+.stat-hero { background: var(--black); }
+
+/* ---------- Hover states ---------- */
+.btn-primary:hover:not(:disabled) { opacity: 1; background: var(--ink); color: var(--ground); }
+.btn .icon:last-child:not(:first-child) { transition: transform var(--ease); }
+.btn:hover:not(:disabled) .icon:last-child:not(:first-child) { transform: translateX(3px); }
+.icon-btn { transition: background var(--ease), transform var(--ease); }
+.icon-btn:hover:not(:disabled) { background: var(--hover); transform: translateY(-1px); }
+
+/* Rows: an ink bar slides in on the left. */
+.list-row { position: relative; }
+.list-row::before {
+  content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--ink); transform: scaleY(0); transition: transform 220ms ease-out;
+}
+.list-row:hover::before, .list-row:focus-visible::before { transform: scaleY(1); }
+.list-row:hover .list-row-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+
+/* Quiet links draw their underline from left to right. */
+.link-quiet, .foot-row a, .auth-switch a, .entry-meta a {
+  text-decoration: none;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size 260ms ease-out, color var(--ease);
+}
+.link-quiet:hover, .foot-row a:hover, .auth-switch a:hover, .entry-meta a:hover { text-decoration: none; background-size: 100% 1px; }
+
+/* Interactive cards: the hairline darkens on hover. */
+.read-item, .g-item, .next-step, .option, .query-link, .won.card { transition: border-color var(--ease), background var(--ease), opacity var(--ease); }
+.read-item:hover, .g-item:hover, .won.card:hover, .option:hover:not(:disabled) { border-color: var(--ink-2); }
+
+/* Top nav: the underline slides in from the left. */
+.topnav a { position: relative; border-bottom: none; }
+.topnav a::after {
+  content: ''; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2px; border-radius: 2px;
+  background: var(--ink); transform: scaleX(0); transform-origin: left; transition: transform 240ms ease-out;
+}
+.topnav a:hover::after { transform: scaleX(0.4); }
+.topnav a[aria-current='page']::after { transform: scaleX(1); }
+
+/* 30-day squares grow on hover and open that day's session. */
+.strip-day { transition: transform 150ms ease-out, background var(--ease); }
+.strip-day:hover { transform: scale(1.25); }
+.strip-day a { display: block; width: 100%; height: 100%; border-radius: inherit; }
+
+/* ---------- Popovers ---------- */
+.profile-menu { transform-origin: top right; }
+.profile-menu:not([hidden]) { animation: pop 160ms ease-out; }
+@keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+.tip {
+  position: fixed; z-index: 90; pointer-events: none; max-width: 300px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 8px;
+  background: var(--black); color: var(--pink); border: 1px solid rgba(254, 222, 225, 0.28);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; line-height: 1.35;
+  opacity: 0; transform: translateY(3px); transition: opacity 140ms ease-out, transform 140ms ease-out;
+}
+.tip.in { opacity: 1; transform: none; }
+.tip::after {
+  content: ''; position: absolute; left: var(--arrow-x, 50%); bottom: -5px; width: 8px; height: 8px; margin-left: -4px;
+  background: var(--black); border-right: 1px solid rgba(254, 222, 225, 0.28); border-bottom: 1px solid rgba(254, 222, 225, 0.28);
+  transform: rotate(45deg);
+}
+.tip[data-below='true']::after { bottom: auto; top: -5px; transform: rotate(225deg); }
+.tip .kbd { color: var(--pink); border-color: rgba(254, 222, 225, 0.4); text-transform: none; }
+
+/* ---------- Loading: first-load screen and the top bar ---------- */
+.splash {
+  position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; justify-items: center; gap: 16px;
+  background: var(--oxblood); color: var(--pink); transition: opacity 400ms ease-out, transform 400ms ease-out;
+}
+.splash.out { opacity: 0; transform: scale(1.02); pointer-events: none; }
+.splash-word {
+  display: flex; font-family: var(--font-display); font-weight: 900; font-stretch: 125%; font-variation-settings: 'wdth' 125;
+  font-size: clamp(3rem, 10vw, 7rem); line-height: 0.9; letter-spacing: -0.01em;
+}
+.splash-word span { display: inline-block; animation: stamp 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.splash-word span:nth-child(2) { animation-delay: 45ms; }
+.splash-word span:nth-child(3) { animation-delay: 90ms; }
+.splash-word span:nth-child(4) { animation-delay: 135ms; }
+.splash-word span:nth-child(5) { animation-delay: 180ms; }
+.splash-word span:nth-child(6) { animation-delay: 225ms; }
+.splash-word span:nth-child(7) { animation-delay: 270ms; }
+@keyframes stamp { from { opacity: 0; transform: translateY(40%) scale(1.08); } to { opacity: 1; transform: none; } }
+.splash-rule { width: min(60vw, 420px); height: 2px; border-radius: 2px; background: var(--pink); transform-origin: left; animation: grow 500ms 300ms ease-out both; }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.splash-tag { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; opacity: 0.7; animation: rise 400ms 450ms ease-out both; }
+
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 95; height: 3px; pointer-events: none;
+  background: var(--pink); transform-origin: left; transform: scaleX(0); opacity: 0;
+}
+.topbar.active { opacity: 1; animation: topbar 1.4s cubic-bezier(0.1, 0.6, 0.2, 1) forwards; }
+.topbar.done { transform: scaleX(1); animation: none; opacity: 0; transition: transform 200ms ease-out, opacity 300ms 150ms ease-out; }
+@keyframes topbar { from { transform: scaleX(0); } to { transform: scaleX(0.85); } }
+body.urgent .topbar { background: var(--oxblood); }
+
+/* ---------- Cursor & focus ---------- */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: var(--r-ctl); }
+.input:focus-visible, .tag-add:focus-visible, .tag-input:focus-visible, .tag-select:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.editor:focus-visible, .answer:focus-visible { outline: none; }
+.editor-wrap:focus-within { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+button, [role='tab'], [data-lookup], [data-toggle], .option, .strip-day a, .read-check input, .switch { cursor: pointer; }
+button:disabled, .btn:disabled { cursor: not-allowed; }
+.editor, .answer, .input, textarea { cursor: text; }
+.option:active:not(:disabled), .strip-day:active { transform: scale(0.99); }

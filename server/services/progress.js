@@ -110,12 +110,15 @@ export async function getSummary(user, tz = 0) {
   const dow = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7; // 0 = Monday
   const monday = new Date(Date.parse(`${today}T00:00:00Z`) - dow * DAY).toISOString().slice(0, 10);
 
-  // The last 30 days, oldest first: a plain record of which days had a session.
-  const read = new Set(all.map((s) => localDay(s.created_at, tz)));
+  // The last 30 days, oldest first: a plain record of which days had a session,
+  // with that day's article for the hover popover.
+  const byDay = new Map();
+  for (const s of all) byDay.set(localDay(s.created_at, tz), s); // latest of the day wins
   const todayMs = Date.parse(`${today}T00:00:00Z`);
   const days = Array.from({ length: 30 }, (_, i) => {
     const date = new Date(todayMs - (29 - i) * DAY).toISOString().slice(0, 10);
-    return { date, read: read.has(date) };
+    const s = byDay.get(date);
+    return { date, read: Boolean(s), id: s?.id ?? null, title: s?.title ?? null, score: s?.overall_score ?? null };
   });
 
   // Today's most recent session, so Today can offer "Continue".

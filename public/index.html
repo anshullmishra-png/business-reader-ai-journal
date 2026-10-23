@@ -14,10 +14,17 @@
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/layout.css">
   <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/interactions.css">
   <script type="module" src="/js/app.js"></script>
 </head>
 <body>
   <a class="visually-hidden" href="#content">Skip to content</a>
+  <div class="topbar" id="topbar" aria-hidden="true"></div>
+  <div class="splash" id="splash" aria-hidden="true">
+    <div class="splash-word"><span>R</span><span>E</span><span>A</span><span>D</span><span>O</span><span>U</span><span>T</span></div>
+    <div class="splash-rule"></div>
+    <div class="splash-tag">Read it · Brief it · Defend it</div>
+  </div>
   <div class="app" id="app" data-dict-open="false">
 
     <header class="header" id="app-header" hidden>
@@ -33,13 +40,13 @@
           <a href="/reviews" data-link data-nav="/reviews">Reviews</a>
         </nav>
         <div class="header-right">
-          <button class="icon-btn" id="pdf-btn" type="button" aria-label="Download PDF" title="Download PDF" hidden>
+          <button class="icon-btn" id="pdf-btn" type="button" aria-label="Download PDF" data-tip="Download PDF" hidden>
             <span data-icon="download"></span>
           </button>
-          <button class="icon-btn" id="dict-toggle" type="button" aria-label="Open dictionary" title="Dictionary (/)">
+          <button class="icon-btn" id="dict-toggle" type="button" aria-label="Open dictionary" data-tip="Dictionary" data-tip-key="/">
             <span data-icon="book-a"></span>
           </button>
-          <button class="profile-btn" id="profile-btn" type="button" aria-haspopup="menu" aria-expanded="false">
+          <button class="profile-btn" id="profile-btn" type="button" aria-haspopup="menu" aria-expanded="false" data-tip="Account">
             <span class="avatar" id="profile-avatar" aria-hidden="true">·</span>
             <span class="profile-name" id="profile-name"></span>
           </button>

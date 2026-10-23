@@ -4,6 +4,7 @@ import { $ } from './lib/dom.js';
 import { hydrateIcons } from './lib/icons.js';
 import { setActiveNav, setHeader, showChrome } from './shell.js';
 import { appState } from './app.js';
+import { busy } from './lib/topbar.js';
 
 // public: reachable while signed out (sign-in pages). Everything else needs an account.
 const routes = [
@@ -35,8 +36,9 @@ export async function render() {
   }
   if (appState.user && match?.r.public) return navigate('/', { replace: true });
 
+  const done = busy();
   const mod = await (match ? match.r.load() : import('./pages/notfound.js'));
-  if (token !== renderToken) return; // a newer navigation won
+  if (token !== renderToken) { done(); return; } // a newer navigation won
 
   if (typeof cleanup === 'function') cleanup();
   cleanup = null;
@@ -48,7 +50,11 @@ export async function render() {
   setActiveNav(path);
   window.scrollTo(0, 0);
 
-  cleanup = await mod.default(el, match?.m.groups ?? {}, { onReady: render });
+  try {
+    cleanup = await mod.default(el, match?.m.groups ?? {}, { onReady: render });
+  } finally {
+    done();
+  }
   hydrateIcons(el);
   // Sections rise in one after another and the ghost word drifts in (skipped under reduced motion).
   el.classList.remove('enter');

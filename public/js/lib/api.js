@@ -1,6 +1,17 @@
 // fetch wrapper for the API. Throws an Error carrying the server's message.
 // Sends the reader's timezone so "today" and streaks follow their clock.
+import { busy } from './topbar.js';
+
 export async function api(path, { method = 'GET', body, signal } = {}) {
+  const done = method === 'GET' ? () => {} : busy();
+  try {
+    return await request(path, { method, body, signal });
+  } finally {
+    done();
+  }
+}
+
+async function request(path, { method, body, signal }) {
   const headers = { 'X-TZ-Offset': String(new Date().getTimezoneOffset()) };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   const res = await fetch(`/api${path}`, {

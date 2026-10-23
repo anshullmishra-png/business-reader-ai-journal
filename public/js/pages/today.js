@@ -34,8 +34,12 @@ function readingStrip(days = []) {
   const label = (d) => new Date(`${d.date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   return html`<section class="strip" aria-label="Days with a session in the last 30 days">
     <div class="strip-head"><span class="label">Last 30 days</span><span class="label">${n} day${n === 1 ? '' : 's'} read</span></div>
-    <ol class="strip-days">${days.map((d, i) => html`<li class="strip-day" data-read="${String(d.read)}" ${i === days.length - 1 ? raw('data-today="true"') : ''}
-      title="${label(d)}${d.read ? ' · read' : ''}"><span class="visually-hidden">${label(d)}: ${d.read ? 'read' : 'no session'}</span></li>`)}</ol>
+    <ol class="strip-days">${days.map((d, i) => {
+      const tip = d.read ? `${label(d)} · ${d.title}${d.score != null ? ` · ${Number(d.score).toFixed(1)}/10` : ''}` : `${label(d)} · no session`;
+      const inner = html`<span class="visually-hidden">${tip}</span>`;
+      return html`<li class="strip-day" data-read="${String(d.read)}" ${i === days.length - 1 ? raw('data-today="true"') : ''} data-tip="${tip}">${d.id
+        ? html`<a href="/session/${d.id}" data-link>${inner}</a>` : inner}</li>`;
+    })}</ol>
   </section>`;
 }
 

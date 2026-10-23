@@ -2,6 +2,7 @@ import { api } from './lib/api.js';
 import { loadIcons, hydrateIcons } from './lib/icons.js';
 import { initDictionary, initProfileMenu, setProfile } from './shell.js';
 import { initRouter, render } from './router.js';
+import './lib/tooltip.js';
 
 // user: the signed-in reader (null when signed out). ai: { configured, calls_today, daily_limit }.
 export const appState = { user: null, ai: null };
@@ -21,6 +22,18 @@ export async function loadMe() {
   return appState.user;
 }
 
+// The first-load screen stays just long enough for the wordmark to land, then lifts.
+const bootStart = Date.now();
+function hideSplash() {
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  const wait = Math.max(0, 650 - (Date.now() - bootStart));
+  setTimeout(() => {
+    splash.classList.add('out');
+    setTimeout(() => splash.remove(), 450);
+  }, wait);
+}
+
 async function boot() {
   await loadIcons();
   hydrateIcons(document);
@@ -29,6 +42,7 @@ async function boot() {
   await loadMe();
   initRouter();
   await render();
+  hideSplash();
 
   // A weekly review is written quietly if one is due. No notification.
   if (appState.user) api('/reviews/check', { method: 'POST' }).catch(() => {});
@@ -36,6 +50,7 @@ async function boot() {
 
 boot().catch((err) => {
   console.error(err);
+  hideSplash();
   document.querySelector('#content').innerHTML =
     '<div class="empty"><div class="empty-title">The app could not start</div>Check your connection and refresh the page.</div>';
 });
