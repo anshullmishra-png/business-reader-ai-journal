@@ -112,7 +112,7 @@ function extraRoundView(set, expanded) {
     </div>`;
   }
   if (set.eval_status === 'failed') return evalFailed(set.id);
-  if (set.status === 'answered') return evaluating(`Scoring your ${levelLabel(set.level).toLowerCase()} round…`);
+  if (set.status === 'answered') return evaluating(`Scoring your ${levelLabel(set.level).toLowerCase()} round`, `eval:${set.id}`);
   if (set.gen_status === 'failed') {
     return html`<div class="card"><p class="form-error" style="margin:0">Couldn't write this round. Pick a level to try again.</p></div>`;
   }
@@ -164,7 +164,13 @@ export function renderVerdict(container, session, { setHeaderPill, onEvaluated }
     return sets.some((s) => (s.status === 'answered' && s.eval_status === 'pending') || s.gen_status === 'pending');
   };
 
+  let lastSig = null;
   function draw() {
+    // Polling returns the same results most of the time: leave the page alone then,
+    // so scrolling, open panels and clicks aren't disturbed.
+    const sig = JSON.stringify([r, [...expanded]]);
+    if (sig === lastSig) return;
+    lastSig = sig;
     liveCleanup?.();
     liveCleanup = null;
     const main = r.main;

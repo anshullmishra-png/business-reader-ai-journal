@@ -46,6 +46,10 @@ export async function render() {
   showChrome(Boolean(appState.user));
   const el = $('#content');
   el.innerHTML = '';
+  // One quick fade per page, started before anything is drawn (so it can't flash).
+  el.classList.remove('page-in');
+  void el.offsetWidth;
+  el.classList.add('page-in');
   setHeader();
   setActiveNav(path);
   window.scrollTo(0, 0);
@@ -56,10 +60,6 @@ export async function render() {
     done();
   }
   hydrateIcons(el);
-  // Sections rise in one after another and the ghost word drifts in (skipped under reduced motion).
-  el.classList.remove('enter');
-  void el.offsetWidth;
-  el.classList.add('enter');
 }
 
 export function navigate(to, { replace = false } = {}) {

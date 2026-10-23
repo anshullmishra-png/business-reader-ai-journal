@@ -17,7 +17,9 @@
 .ai-wait-bar, .ai-wait-bar span { border-radius: 99px; }
 .dict { border-radius: var(--r-panel) 0 0 var(--r-panel); overflow: hidden; }
 .list-card, .q-card, .extra-card, .g-item, .profile-menu { overflow: hidden; }
-.editor-wrap { overflow: hidden; }
+.editor-wrap { overflow: visible; } /* not hidden: the submit bar inside must be able to stick */
+.editor-foot { border-radius: 0 0 var(--r-ctl) var(--r-ctl); }
+.editor { border-radius: var(--r-ctl) var(--r-ctl) 0 0; }
 
 /* Lists of choices become separate rounded rows instead of one ruled stack. */
 .options { border-top: none; gap: 8px; }
@@ -141,3 +143,14 @@ button:disabled, .btn:disabled { cursor: not-allowed; }
 .editor, .answer, .input, textarea { cursor: text; }
 .option:active:not(:disabled), .strip-day:active { transform: scale(0.99); }
 .guest-row { display: grid; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.sample-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--rule); }
+
+/* Reading a pasted article inside the app */
+.article-read { margin-top: 20px; padding: 0; overflow: hidden; }
+.article-read summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 22px; cursor: pointer; list-style: none; }
+.article-read summary::-webkit-details-marker { display: none; }
+.article-read-toggle::after { content: 'Show'; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink); }
+.article-read[open] .article-read-toggle::after { content: 'Hide'; }
+.article-read summary:hover { background: var(--hover); }
+.article-text { max-height: 60vh; overflow-y: auto; padding: 4px 22px 22px; border-top: 1px solid var(--rule); }
+.article-text p { margin-top: 1em; }

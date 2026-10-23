@@ -4,7 +4,7 @@ import { TagsEdit } from '../ai/schemas.js';
 import { fetchArticle, ExtractError, countWords } from '../services/extract.js';
 import {
   createSession, requireSession, listSessions, localMidnight, setTags, retryTagging,
-  deleteSession, submitComprehension, startInterview, httpError, MIN_ARTICLE_WORDS,
+  deleteSession, submitComprehension, startInterview, httpError, MIN_ARTICLE_WORDS, getArticleText,
 } from '../services/sessions.js';
 import { comprehensionWords, MIN_WORDS, MAX_WORDS } from '../services/words.js';
 import { createMainSet, getMainSet, retryGeneration } from '../services/questions.js';
@@ -89,6 +89,16 @@ sessionsRouter.post('/', async (req, res) => {
 
 sessionsRouter.get('/:id', async (req, res) => {
   res.json(await sessionView(req.user, Id.parse(req.params.id)));
+});
+
+// The article text, for articles the reader pasted themselves (no original page to
+// go back to). Linked articles are read on their own site. Hidden during the interview.
+sessionsRouter.get('/:id/article', async (req, res) => {
+  const id = Id.parse(req.params.id);
+  const s = await requireSession(req.user.id, id);
+  if (s.url) throw httpError(404, 'Read this article on its original site.');
+  if (s.stage === 'interview') throw httpError(409, 'The article is hidden during the interview.');
+  res.json({ text: await getArticleText(id) });
 });
 
 // ---- Stage 2: Write ----

@@ -144,10 +144,10 @@ export function renderInterview(container, { sessionId, setId, onProgress, onDon
     const ta = $('#answer', container);
     if (ta) {
       ta.addEventListener('input', () => writeDraft(q.id, ta.value));
-      ta.focus();
+      ta.focus({ preventScroll: true });
       ta.setSelectionRange(ta.value.length, ta.value.length);
     } else {
-      $('.option', container)?.focus();
+      $('.option', container)?.focus({ preventScroll: true });
     }
     $('#submit-answer', container).addEventListener('click', () => submit(false));
     tick();

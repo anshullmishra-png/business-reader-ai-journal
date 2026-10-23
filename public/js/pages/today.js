@@ -6,6 +6,7 @@ import { navigate } from '../router.js';
 import { appState, loadMe } from '../app.js';
 import { sessionCard } from '../lib/sessionCard.js';
 import { drawing } from '../lib/drawings.js';
+import { SAMPLES } from '../lib/samples.js';
 
 function greeting() {
   const h = new Date().getHours();
@@ -146,6 +147,7 @@ export default async function render(el) {
             </div>
           </form>
 
+          ${appState.ai?.test_mode ? html`<div class="sample-row"><span class="hint">Testing?</span>${SAMPLES.map((s, i) => html`<button class="btn btn-ghost btn-sm" type="button" data-sample="${i}">Sample ${i + 1}</button>`)}</div>` : ''}
           <div id="add-status" aria-live="polite"></div>
         </section>
 
@@ -199,6 +201,17 @@ export default async function render(el) {
   };
   for (const t of $$('[data-mode]', el)) t.addEventListener('click', () => setMode(t.dataset.mode));
 
+  // Test deployments: fill the text form with a fictional article.
+  for (const b of $$('[data-sample]', el)) {
+    b.addEventListener('click', () => {
+      const s = SAMPLES[Number(b.dataset.sample)];
+      setMode('text');
+      $('#add-title', el).value = s.title;
+      $('#add-text', el).value = s.text;
+      $('#add-link', el).value = '';
+    });
+  }
+
   // ---- Submit ----
   const status = (content) => { $('#add-status', el).innerHTML = content.toString(); };
   const busy = (form, on) => { for (const b of $$('button, input, textarea', form)) b.disabled = on; };
@@ -247,9 +260,13 @@ export default async function render(el) {
   });
 
   // ---- Today's sessions (refreshes so extension captures appear) ----
+  let lastListSig = null;
   async function loadList() {
     const list = await api('/sessions?scope=today').catch(() => null);
     if (!list) return;
+    const sig = JSON.stringify(list.map((s) => [s.id, s.stage, s.overall_score, s.title, s.tags?.sector]));
+    if (sig === lastListSig) return; // unchanged: keep the rows (and any hover) as they are
+    lastListSig = sig;
     $('#today-list', el).innerHTML = list.length
       ? html`<div class="list">${list.map(sessionCard)}</div>`.toString()
       : html`<div class="empty empty-compact">${drawing('newspaper')}
@@ -261,6 +278,5 @@ export default async function render(el) {
   const onFocus = () => loadList();
   window.addEventListener('focus', onFocus);
 
-  if (!block) $('#add-url', el).focus();
   return () => { clearInterval(timer); window.removeEventListener('focus', onFocus); };
 }

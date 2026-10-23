@@ -744,13 +744,8 @@ body.urgent .countdown { animation: beat 1s steps(2, jump-none) infinite; }
 .keys .kbd { margin: 0 2px; }
 
 /* ---------- Verdict reveal (first view only) ---------- */
-.reveal-in > * { animation: rise 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.reveal-in > :nth-child(2) { animation-delay: 80ms; }
-.reveal-in .pull-quote { animation: rise 520ms cubic-bezier(0.2, 0.7, 0.2, 1) 1150ms both; }
-.reveal-in > :nth-child(3) { animation-delay: 1500ms; }
-.reveal-in > :nth-child(4) { animation-delay: 1650ms; }
-.reveal-in > :nth-child(5) { animation-delay: 1800ms; }
-.reveal-in > :nth-child(n + 6) { animation-delay: 1950ms; }
+/* The verdict: the score counts up, the quote follows a beat later. Nothing stays hidden. */
+.reveal-in .pull-quote { animation: rise 360ms ease-out 250ms both; }
 
 .next-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
 .next-step {
@@ -781,14 +776,11 @@ body.urgent .countdown { animation: beat 1s steps(2, jump-none) infinite; }
 
 /* ---------- Motion & press states ---------- */
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-@keyframes drift { from { opacity: 0; transform: translateX(40%); } to { opacity: 1; transform: translateX(28%); } }
-.content.enter > * { animation: rise 460ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.content.enter > :nth-child(2) { animation-delay: 60ms; }
-.content.enter > :nth-child(3) { animation-delay: 120ms; }
-.content.enter > :nth-child(4) { animation-delay: 180ms; }
-.content.enter > :nth-child(n + 5) { animation-delay: 240ms; }
-.content.enter::before { animation: drift 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn-primary:active:not(:disabled) { background: var(--ink); color: var(--ground); opacity: 1; }
 .btn-secondary:active:not(:disabled), .btn-ghost:active:not(:disabled) { background: var(--ink); color: var(--ground); }
 .list-row:active, .next-step:active, .option:active:not(:disabled) { background: var(--rule); }
+
+/* Page change: one short fade of the whole page. Opacity only, so nothing jumps. */
+.content.page-in { animation: page-in 220ms ease-out; }
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }

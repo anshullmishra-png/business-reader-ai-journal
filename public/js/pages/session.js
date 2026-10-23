@@ -76,7 +76,11 @@ export default async function render(el, { id }) {
       ${published ? html`<span>Published ${published}</span>` : ''}
       ${s.author ? html`<span>${s.author}</span>` : ''}
     </div>
-    ${s.url ? html`<p class="article-link"><a class="btn btn-secondary btn-sm" href="${s.url}" target="_blank" rel="noopener noreferrer">${raw(icon('external-link'))}Read on the original site</a></p>` : ''}
+    ${s.url ? html`<p class="article-link"><a class="btn btn-secondary btn-sm" href="${s.url}" target="_blank" rel="noopener noreferrer">${raw(icon('external-link'))}Read on the original site</a></p>`
+      : html`<details class="card article-read" id="article-read" ${s.stage === 'write' ? raw('open') : ''}>
+          <summary><span class="label">The article · ${plural(s.word_count, 'word')}</span><span class="article-read-toggle"></span></summary>
+          <div class="prose article-text" id="article-text"><p class="status-line">Loading the article…</p></div>
+        </details>`}
     </header>
 
     <div class="session-layout">
@@ -94,6 +98,24 @@ export default async function render(el, { id }) {
       </aside>
     </div>`.toString();
 
+  // Pasted articles: load the text the first time the panel opens.
+  const readPanel = $('#article-read', el);
+  if (readPanel) {
+    let loaded = false;
+    const loadText = async () => {
+      if (loaded || !readPanel.open) return;
+      loaded = true;
+      try {
+        const { text } = await api(`/sessions/${id}/article`);
+        $('#article-text', el).innerHTML = html`${text.split(/\n{2,}/).map((p) => html`<p>${p}</p>`)}`.toString();
+      } catch (err) {
+        $('#article-text', el).innerHTML = html`<p class="hint">${err.message}</p>`.toString();
+      }
+    };
+    readPanel.addEventListener('toggle', loadText);
+    loadText();
+  }
+
   const tagsEl = $('#tags', el);
   const drawTags = () => { tagsEl.innerHTML = tagsView(s, m).toString(); };
   drawTags();
@@ -106,6 +128,8 @@ export default async function render(el, { id }) {
     stageCleanup?.();
     stageCleanup = null;
     setHeader({ title: s.title, pdf: reportUrl(), ghost: 'Read' });
+    // The article is for writing the brief; fold it away once the brief is locked.
+    if (s.stage !== 'write' && readPanel?.open) readPanel.open = false;
     $('#tracker', el).innerHTML = trackerHtml(s.stage, { times: { verdictDone: s.overall_score != null } }).toString();
     el.querySelector('.session-layout').classList.toggle('is-interview', s.stage === 'interview');
     const stageEl = $('#stage', el);

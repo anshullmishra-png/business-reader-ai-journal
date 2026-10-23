@@ -35,7 +35,7 @@ export function renderWrite(container, session, { onSubmitted }) {
 
   container.innerHTML = html`
     ${stageHeading('write')}
-    <p class="hint write-intro">Read the article on the original site first. Then condense it in ${MIN_WORDS}–${MAX_WORDS} words:
+    <p class="hint write-intro">${session.url ? 'Read the article on the original site first.' : 'Read the article above first.'} Then condense it in ${MIN_WORDS}–${MAX_WORDS} words:
       what happened, why it matters, how the money works, and what you'd do. Once you submit, it's locked.</p>
 
     <div class="write-bar">
@@ -131,7 +131,7 @@ export function renderWrite(container, session, { onSubmitted }) {
       editor.value = stripTemplate(editor.value);
     }
     update();
-    editor.focus();
+    editor.focus({ preventScroll: true });
     // Remember the choice for next time.
     api('/me/settings', { method: 'PATCH', body: { template_default: toggle.checked } })
       .then((u) => { appState.user = u; })
@@ -173,8 +173,12 @@ export function renderWrite(container, session, { onSubmitted }) {
   });
 
   update();
-  editor.focus();
-  editor.setSelectionRange(editor.value.length, editor.value.length);
+  // Ready to type on a computer, without scrolling past the title and article.
+  // On touch screens the keyboard would cover the page, so wait for a tap.
+  if (window.matchMedia('(pointer: fine)').matches) {
+    editor.focus({ preventScroll: true });
+    editor.setSelectionRange(editor.value.length, editor.value.length);
+  }
 
   return () => clearInterval(timer);
 }

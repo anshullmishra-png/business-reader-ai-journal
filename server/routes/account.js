@@ -55,6 +55,7 @@ meRouter.get('/', async (req, res) => {
     ...publicUser(req.user),
     ai: {
       configured: Boolean(keyNow),
+      test_mode: config.allowGuest,
       key_now: keyNow,
       article_block: block,
       articles_today: articles,

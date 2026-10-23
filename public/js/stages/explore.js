@@ -53,6 +53,9 @@ function startBar(s) {
       I'm ready. Start the interview ${raw(icon('arrow-right'))}</button>`;
 }
 
+// Live clocks tick on their own, so they don't count as a change.
+const sameMarkup = (a, b) => a != null && a.replace(/(data-wait-since="\\d+">)[^<]*/g, '$1') === b.replace(/(data-wait-since="\\d+">)[^<]*/g, '$1');
+
 export function renderExplore(container, session, { onChange }) {
   let s = session;
   let timer = null;
@@ -63,9 +66,17 @@ export function renderExplore(container, session, { onChange }) {
     <div id="related"></div>
     <div class="start-bar card" id="start-bar"></div>`.toString();
 
+  // Redraw only the parts that changed, so a click or hover isn't lost to a refresh.
+  const drawn = {};
+  const put = (id, markup) => {
+    const next = markup.toString();
+    if (sameMarkup(drawn[id], next)) return;
+    drawn[id] = next;
+    $(`#${id}`, container).innerHTML = next;
+  };
   const draw = () => {
-    $('#related', container).innerHTML = relatedView(s).toString();
-    $('#start-bar', container).innerHTML = startBar(s).toString();
+    put('related', relatedView(s));
+    put('start-bar', startBar(s));
   };
 
   const needsPoll = () => s.related_status === 'pending' || s.main_set?.gen_status === 'pending';
