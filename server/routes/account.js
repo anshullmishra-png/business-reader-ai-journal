@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { config } from '../config.js';
-import { callsToday, appSpendToday } from '../ai/gemini.js';
+import { callsToday, appSpendToday, appSpendTotal } from '../ai/gemini.js';
 import { articlesToday } from '../services/sessions.js';
 import {
   signUp, signIn, signOut, readCookie, setSessionCookie, clearSessionCookie, requireUser,
@@ -42,8 +42,8 @@ authRouter.post('/signout', async (req, res) => {
 meRouter.use(requireUser);
 
 meRouter.get('/', async (req, res) => {
-  const [today, articles, appSpend] = await Promise.all([
-    callsToday(req.user.id), articlesToday(req.user.id, req.tz), appSpendToday(),
+  const [today, articles, appSpend, appTotal] = await Promise.all([
+    callsToday(req.user.id), articlesToday(req.user.id, req.tz), appSpendToday(), appSpendTotal(),
   ]);
   res.json({
     ...publicUser(req.user),
@@ -58,6 +58,8 @@ meRouter.get('/', async (req, res) => {
       cost_today_usd: today.cost_usd,
       app_spend_today_usd: appSpend,
       app_budget_usd: config.appDailyBudgetUsd,
+      app_spend_total_usd: appTotal,
+      lifetime_budget_usd: config.lifetimeBudgetUsd,
     },
   });
 });

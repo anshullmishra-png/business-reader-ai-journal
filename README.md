@@ -77,7 +77,7 @@ All AI calls go through [`server/ai/gemini.js`](server/ai/gemini.js):
 - **Every response is validated** against a zod schema (sent to Gemini as the response JSON schema, then checked again), with one transport retry and one "return valid JSON only" repair.
 - **Two models:** Flash-Lite for tagging and dictionary lookups; Flash, with thinking left on, for related reading, questions, scoring and weekly reviews.
 - **Real usage is logged.** Every call records Gemini's input, output and thinking token counts and its cost at Google's paid rates. Settings shows each reader's tokens and cost today, and the app's spend against its daily budget.
-- **Spending is capped three ways:** one new article per person per day, at most 30 AI calls per person per day, and an app-wide daily budget (default $0.50). When the budget is used up, new articles and AI calls pause until midnight UTC.
+- **Spending is capped four ways:** one new article per person per day, at most 30 AI calls per person per day, an app-wide daily budget (default $0.50, which pauses AI work until midnight UTC) and a lifetime budget (default $4.80, which stops AI work just before $5 of prepaid credit runs out).
 
 One article end to end costs about **$0.045** (most of it is the questions and scoring on Flash). With the default budget, $5 of prepaid credit lasts at least ten days at full use by eleven readers.
 
@@ -92,6 +92,7 @@ One article end to end costs about **$0.045** (most of it is the questions and s
 | `INVITE_CODE` | The code friends need to create an account |
 | `ARTICLES_PER_DAY` | New articles per person per day (default 1) |
 | `APP_DAILY_BUDGET_USD` | App-wide Gemini spend per day (default 0.50) |
+| `LIFETIME_BUDGET_USD` | All-time Gemini spend cap (default 4.80); raise it after a top-up |
 | `AI_DAILY_LIMIT` | AI calls per person per day (default 30) |
 
 **Locally:** Node.js 22+, then `npm install`, a `.env.local` with the variables above (the Turso ones are optional: without them a local SQLite file in `data/` is used), and `npm run dev`. On Windows, double-clicking `start.bat` does the same. Readout opens on http://localhost:4317.

@@ -12,7 +12,9 @@ export default async function render(el) {
   await loadMe();
   const s = appState.user;
   const ai = appState.ai;
-  const budgetUsed = Math.min(100, Math.round((ai.app_spend_today_usd / Math.max(0.01, ai.app_budget_usd)) * 100));
+  const pct = (a, b) => Math.min(100, Math.round((a / Math.max(0.01, b)) * 100));
+  const budgetUsed = pct(ai.app_spend_today_usd, ai.app_budget_usd);
+  const creditUsed = pct(ai.app_spend_total_usd, ai.lifetime_budget_usd);
 
   el.innerHTML = html`
     <header class="page-head">
@@ -58,7 +60,9 @@ export default async function render(el) {
                </dl>
                <div class="field-label usage-budget">Readout today: ${usd(ai.app_spend_today_usd)} of ${usd(ai.app_budget_usd)}</div>
                <div class="meter"><span style="width:${budgetUsed}%"></span></div>
-               <p class="hint">Real token counts from Gemini, priced at Google's paid rates. Output includes the model's thinking. Resets at midnight UTC.</p>`
+               <div class="field-label usage-budget">Total spent: ${usd(ai.app_spend_total_usd)} of ${usd(ai.lifetime_budget_usd)}</div>
+               <div class="meter"><span style="width:${creditUsed}%"></span></div>
+               <p class="hint">Real token counts from Gemini, priced at Google's paid rates. Output includes the model's thinking. The daily figure resets at midnight UTC; the total stops AI work just before the prepaid credit runs out.</p>`
             : html`<span class="pill pill-muted">Not configured</span>
                <p class="hint">The AI isn't set up on the server yet, so questions and scoring are paused.</p>`}
         </section>

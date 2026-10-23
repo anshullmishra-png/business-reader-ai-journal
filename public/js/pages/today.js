@@ -36,7 +36,8 @@ export default async function render(el) {
   // One new article a day: once it's started, the add form gives way to a note.
   const ai = appState.ai ?? {};
   const doneForToday = ai.articles_today >= ai.articles_per_day;
-  const budgetSpent = ai.app_spend_today_usd + 0.06 > ai.app_budget_usd;
+  const creditSpent = ai.app_spend_total_usd + 0.06 > ai.lifetime_budget_usd;
+  const budgetSpent = creditSpent || ai.app_spend_today_usd + 0.06 > ai.app_budget_usd;
   const first = appState.user?.name?.split(/\s+/)[0];
   const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -123,7 +124,8 @@ export default async function render(el) {
     $('.add-card .card-title', el).lastChild.textContent = doneForToday ? "Today's article is in" : 'Paused for today';
     $('#add-status', el).innerHTML = html`<p class="land-pitch">${doneForToday
       ? 'One article a day keeps every interview sharp. Finish today’s session; the next article unlocks tomorrow.'
-      : 'Readout has used today’s AI budget. New articles unlock again after midnight UTC.'}</p>`.toString();
+      : creditSpent ? 'Readout has used its AI credit. New articles unlock again once it is topped up.'
+        : 'Readout has used today’s AI budget. New articles unlock again after midnight UTC.'}</p>`.toString();
   }
 
   // ---- Tabs ----

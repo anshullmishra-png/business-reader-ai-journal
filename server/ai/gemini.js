@@ -7,7 +7,7 @@ import { config } from '../config.js';
 import { db, now } from '../db/index.js';
 
 export class AiError extends Error {
-  /** @param {'not_configured'|'quota'|'budget'|'timeout'|'invalid_output'|'failed'} code */
+  /** @param {'not_configured'|'quota'|'budget'|'credit'|'timeout'|'invalid_output'|'failed'} code */
   constructor(code, message, detail) {
     super(message);
     this.code = code;
@@ -19,6 +19,7 @@ const FRIENDLY = {
   not_configured: "The AI isn't configured on the server yet.",
   quota: "You've reached today's AI limit. It resets at midnight UTC.",
   budget: "Readout has used up today's AI budget. It resets at midnight UTC.",
+  credit: 'Readout has used its AI credit. AI features are paused until it is topped up.',
   timeout: 'The AI took too long to answer. Try again.',
   invalid_output: "The AI's answer wasn't in the expected format. Try again.",
   failed: 'The AI call failed. Try again.',
@@ -69,6 +70,12 @@ export async function callsToday(userId) {
       COALESCE(SUM(output_tokens + thinking_tokens), 0) AS output_tokens,
       COALESCE(SUM(cost_usd), 0) AS cost_usd
     FROM ai_calls WHERE user_id = ? AND created_at >= ?`, userId, utcMidnight());
+}
+
+/** What the whole app has ever spent on Gemini, in USD. */
+export async function appSpendTotal() {
+  const r = await db.get('SELECT COALESCE(SUM(cost_usd), 0) AS cost FROM ai_calls');
+  return r.cost;
 }
 
 /** What the whole app has spent on Gemini since UTC midnight, in USD. */
@@ -128,6 +135,7 @@ async function attempt({ userId, task, model, system, prompt, jsonSchema, timeou
  */
 export async function runTask({ userId, task, tier = 'light', system, prompt, schema }) {
   if (!config.gemini.apiKey) throw new AiError('not_configured', 'GEMINI_API_KEY is not set');
+  if (await appSpendTotal() >= config.lifetimeBudgetUsd) throw new AiError('credit', 'lifetime AI budget reached');
   if (await appSpendToday() >= config.appDailyBudgetUsd) throw new AiError('budget', 'app daily AI budget reached');
   if (userId != null) {
     const today = await callsToday(userId);
@@ -146,7 +154,7 @@ export async function runTask({ userId, task, tier = 'light', system, prompt, sc
     try {
       raw = await attempt({ ...base, prompt: currentPrompt });
     } catch (err) {
-      if (['not_configured', 'quota', 'budget'].includes(err.code) || retriedTransport) throw err;
+      if (['not_configured', 'quota', 'budget', 'credit'].includes(err.code) || retriedTransport) throw err;
       retriedTransport = true;
       continue;
     }

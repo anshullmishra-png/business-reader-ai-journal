@@ -36,6 +36,9 @@ export const config = {
   // $0.045 an article, $0.50 covers ~11 articles a day (you plus ten testers),
   // so $5 of prepaid credit lasts at least ten days of full use.
   appDailyBudgetUsd: Number(env.APP_DAILY_BUDGET_USD) || 0.5,
+  // All-time Gemini spend cap in USD. The app can't read the Google balance, so this
+  // stops new AI work just before $5 of prepaid credit runs out. Raise it after a top-up.
+  lifetimeBudgetUsd: Number(env.LIFETIME_BUDGET_USD) || 4.8,
 
   isVercel: Boolean(env.VERCEL),
   port: Number(env.PORT) || 4317,

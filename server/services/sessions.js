@@ -6,7 +6,7 @@ import { enqueue } from '../jobs/runner.js';
 import { ensureRelated } from './related.js';
 import { httpError } from './auth.js';
 import { config } from '../config.js';
-import { appSpendToday } from '../ai/gemini.js';
+import { appSpendToday, appSpendTotal } from '../ai/gemini.js';
 
 export { httpError };
 export const MIN_ARTICLE_WORDS = 300;
@@ -39,6 +39,9 @@ async function checkArticleAllowance(userId, tzOffset) {
     throw httpError(429, config.articlesPerDay === 1
       ? "You've already started today's article. The next one unlocks tomorrow."
       : `You've started ${n} articles today, the daily limit. More unlock tomorrow.`, { code: 'article_limit' });
+  }
+  if (await appSpendTotal() + ARTICLE_COST_USD > config.lifetimeBudgetUsd) {
+    throw httpError(429, 'Readout has used its AI credit, so new articles are paused until it is topped up.', { code: 'credit' });
   }
   if (await appSpendToday() + ARTICLE_COST_USD > config.appDailyBudgetUsd) {
     throw httpError(429, "Readout has used up today's AI budget, so new articles are paused until midnight UTC.", { code: 'budget' });
