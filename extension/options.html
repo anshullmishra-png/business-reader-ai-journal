@@ -21,15 +21,16 @@
   <form id="form">
     <label for="token">Capture token</label>
     <input id="token" autocomplete="off" spellcheck="false" required>
-    <p class="hint">Copy it from the journal: Settings → Browser extension.</p>
+    <p class="hint">Copy it from the journal: Account → Settings → Browser extension.</p>
 
     <label for="server">Journal address</label>
-    <input id="server" spellcheck="false" placeholder="http://127.0.0.1:4317">
-    <p class="hint">Change this only if the journal said it's using a different port.</p>
+    <input id="server" spellcheck="false" placeholder="https://business-reads-journal.vercel.app">
+    <p class="hint">The web address of your journal. Leave it as is unless you were given a different one.</p>
 
     <button class="btn" type="submit">Save</button>
     <p class="ok" id="saved" hidden style="margin-top:12px">Saved ✓</p>
   </form>
+  <script src="config.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

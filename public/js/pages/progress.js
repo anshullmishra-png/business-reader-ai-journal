@@ -55,14 +55,13 @@ function chartCard(id, title, { table = false, height = 260, extra = '' } = {}) 
 
 export default async function render(el) {
   setHeader({ title: 'Progress', pdf: '/print/portfolio?autoprint' });
-  el.classList.add('content-wide');
   let win = (() => { try { return localStorage.getItem('brj:progress-window') || '7a'; } catch { return '7a'; } })();
   const charts = [];
   const destroyCharts = () => { while (charts.length) charts.pop().destroy(); };
 
   el.innerHTML = html`
     <div class="progress-top">
-      <div><h1 class="page-title">Progress</h1>
+      <div><div class="label page-kicker">Dashboard</div><h1 class="page-title">Progress</h1>
         <p class="page-lede">How your reading is turning into interview skill.</p></div>
       <div class="segmented" role="tablist" aria-label="Time window">
         ${WINDOWS.map((w) => html`<button type="button" role="tab" data-window="${w.key}">${w.label}</button>`)}
@@ -260,5 +259,5 @@ export default async function render(el) {
   });
 
   await draw();
-  return () => { destroyCharts(); el.classList.remove('content-wide'); };
+  return () => { destroyCharts(); };
 }

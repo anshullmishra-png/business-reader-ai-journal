@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Send to Journal",
   "short_name": "Send to Journal",
-  "version": "1.0.0",
-  "description": "Send the article you're reading to your local Business Reads Journal.",
+  "version": "2.0.0",
+  "description": "Send the article you're reading to your Business Reads Journal.",
   "action": {
     "default_title": "Send to Journal",
     "default_popup": "popup.html",
@@ -24,6 +24,14 @@
     "page": "options.html",
     "open_in_tab": false
   },
-  "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["http://127.0.0.1/*"]
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.vercel.app/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*"
+  ]
 }

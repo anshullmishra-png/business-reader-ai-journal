@@ -4,6 +4,7 @@ import { setHeader } from '../shell.js';
 export default async function render(el) {
   setHeader({ title: 'About' });
   el.innerHTML = html`
+    <div class="label page-kicker">About</div>
     <h1 class="page-title">About this journal</h1>
     <p class="page-lede">Daily business reading, turned into deliberate practice for Chief of Staff and Founder's Office interviews.</p>
 
@@ -36,11 +37,11 @@ export default async function render(el) {
     <section class="section">
       <h2 class="section-heading">How it works</h2>
       <div class="prose">
-        <p>The app runs entirely on this laptop: a small Node.js server, a SQLite file, and plain HTML, CSS and JavaScript.
-          All AI work goes through Claude Code running in headless mode on the same machine, using your own Claude subscription.
-          Every AI response is checked against a strict schema before it's saved.</p>
-        <p>Nothing leaves the laptop except the AI calls. The app never logs in anywhere or scrapes on its own: articles come from
-          your own browser tab through a small extension. Article text is used only to ground the evaluation.</p>
+        <p>The journal is a small web app: a Node.js server on Vercel, a Turso (SQLite) database, and plain HTML, CSS and JavaScript.
+          The interviewer and evaluator run on Google Gemini. Every AI response is checked against a strict schema before it's saved.</p>
+        <p>Each reader has a private account; nobody else can see your writing or scores. The app never logs in anywhere or scrapes
+          paywalled sites on its own: those articles come from your own browser tab through a small extension.
+          Article text is used only to ground the questions and the evaluation.</p>
       </div>
     </section>`.toString();
 }

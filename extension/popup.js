@@ -1,7 +1,5 @@
-/* global extractArticle */
+/* global extractArticle, DEFAULT_SERVER */
 const view = document.getElementById('view');
-
-const DEFAULT_SERVER = 'http://127.0.0.1:4317';
 
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -41,7 +39,7 @@ async function send(article, { server, token }) {
       body: JSON.stringify(article),
     });
   } catch {
-    throw new Error("Couldn't reach the journal. Is it running? Double-click start.bat, then try again.");
+    throw new Error("Couldn't reach the journal. Check your internet connection, then try again.");
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `The journal returned an error (${res.status}).`);

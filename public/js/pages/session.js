@@ -1,7 +1,7 @@
 import { html, raw, $, toast } from '../lib/dom.js';
 import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
-import { setHeader } from '../shell.js';
+import { setHeader, trackerHtml } from '../shell.js';
 import { navigate } from '../router.js';
 import { fmtDate, fmtTime, fmtMaybeDate, plural } from '../lib/format.js';
 import { sourceMark } from '../lib/sourceMark.js';
@@ -14,8 +14,6 @@ import { drawing } from '../lib/drawings.js';
 
 let meta = null; // { sectors, company_stages }
 const getMeta = async () => (meta ??= await api('/meta'));
-
-const STAGE_PILL = { write: 'Write', explore: 'Explore', interview: 'Interview', verdict: 'Verdict' };
 
 // ---------- Tags ----------
 const LIST_FIELDS = { companies: { label: 'Companies', max: 8 }, themes: { label: 'Themes', max: 5 } };
@@ -65,15 +63,17 @@ export default async function render(el, { id }) {
     setHeader({ title: 'Session not found' });
     el.innerHTML = html`<div class="empty">${drawing('notebook')}
       <div class="empty-title">Session not found</div>It may have been deleted.
-      <div style="margin-top:16px"><a class="btn btn-ghost btn-sm" href="/" data-link>Back to Today</a></div></div>`.toString();
+      <div class="empty-actions"><a class="btn btn-secondary" href="/" data-link>Back to Today</a></div></div>`.toString();
     return;
   }
   const m = await getMeta();
 
-  setHeader({ title: s.title, pill: STAGE_PILL[s.stage], stage: s.stage });
+  setHeader({ title: s.title });
 
   const published = fmtMaybeDate(s.published_at);
   el.innerHTML = html`
+    <header class="page-head article-head">
+    <a class="link-quiet back-link" href="/history" data-link>${raw(icon('chevron-right'))}History</a>
     <h1 class="page-title article-title">${s.title}</h1>
     <div class="meta-row">
       ${sourceMark(s.source)}
@@ -82,18 +82,23 @@ export default async function render(el, { id }) {
       ${published ? html`<span>Published ${published}</span>` : ''}
       ${s.author ? html`<span>${s.author}</span>` : ''}
     </div>
-    ${s.url ? html`<p style="margin-top:14px"><a class="link-quiet" href="${s.url}" target="_blank" rel="noopener noreferrer">${raw(icon('external-link'))}Read on the original site</a></p>` : ''}
+    ${s.url ? html`<p class="article-link"><a class="btn btn-secondary btn-sm" href="${s.url}" target="_blank" rel="noopener noreferrer">${raw(icon('external-link'))}Read on the original site</a></p>` : ''}
+    </header>
 
-    <section class="section" id="stage"></section>
-
-    <section class="section" data-hide-in-interview>
-      ${stageHeading('add', 'Tags')}
-      <div class="card" id="tags"></div>
-    </section>
-
-    <section class="section" data-hide-in-interview>
-      <button class="btn btn-ghost btn-sm" type="button" data-action="delete">${raw(icon('trash-2'))}Delete this session</button>
-    </section>`.toString();
+    <div class="session-layout">
+      <div class="session-main" id="stage"></div>
+      <aside class="session-side" data-hide-in-interview>
+        <section class="card">
+          <div class="label">Progress</div>
+          <div id="tracker"></div>
+        </section>
+        <section class="card">
+          <div class="label">Tags</div>
+          <div id="tags"></div>
+        </section>
+        <button class="btn btn-ghost btn-sm btn-quiet" type="button" data-action="delete">${raw(icon('trash-2'))}Delete this session</button>
+      </aside>
+    </div>`.toString();
 
   const tagsEl = $('#tags', el);
   const drawTags = () => { tagsEl.innerHTML = tagsView(s, m).toString(); };
@@ -106,7 +111,9 @@ export default async function render(el, { id }) {
   const drawStage = () => {
     stageCleanup?.();
     stageCleanup = null;
-    setHeader({ title: s.title, pill: STAGE_PILL[s.stage], stage: s.stage, pdf: reportUrl() });
+    setHeader({ title: s.title, pdf: reportUrl() });
+    $('#tracker', el).innerHTML = trackerHtml(s.stage, { times: { verdictDone: s.overall_score != null } }).toString();
+    el.querySelector('.session-layout').classList.toggle('is-interview', s.stage === 'interview');
     const stageEl = $('#stage', el);
     stageEl.innerHTML = '';
     // Nothing but the question on screen during the interview.
@@ -117,10 +124,10 @@ export default async function render(el, { id }) {
         heading: stageHeading('interview'),
         sessionId: s.id,
         setId: s.main_set.id,
-        onProgress: (q) => setHeader({ title: s.title, pill: `Interview · Q${q.position}/${q.total}`, stage: 'interview' }),
+        onProgress: (q) => setHeader({ title: `Q${q.position}/${q.total} · ${s.title}` }),
         onDone: async () => {
           s = await api(`/sessions/${id}`);
-          setTimeout(() => { drawStage(); $('#main').scrollTop = 0; }, 900);
+          setTimeout(() => { drawStage(); window.scrollTo(0, 0); }, 900);
         },
       });
       return;
@@ -132,7 +139,7 @@ export default async function render(el, { id }) {
       lockedEl.className = 'section';
       stageEl.append(verdictEl, lockedEl);
       stageCleanup = renderVerdict(verdictEl, s, {
-        setHeaderPill: (pill) => setHeader({ title: s.title, pill: pill ?? STAGE_PILL.verdict, stage: 'verdict', pdf: reportUrl() }),
+        setHeaderPill: () => setHeader({ title: s.title, pdf: reportUrl() }),
       });
       renderLockedComprehension(lockedEl, s);
       return;
@@ -140,7 +147,7 @@ export default async function render(el, { id }) {
 
     if (s.stage === 'write') {
       stageCleanup = renderWrite(stageEl, s, {
-        onSubmitted: (updated) => { s = updated; drawStage(); $('#main').scrollTop = 0; },
+        onSubmitted: (updated) => { s = updated; drawStage(); window.scrollTo(0, 0); },
       });
       return;
     }
@@ -153,7 +160,7 @@ export default async function render(el, { id }) {
       stageCleanup = renderExplore(next, s, {
         onChange: (fresh, { stageChanged } = {}) => {
           s = fresh;
-          if (stageChanged) { drawStage(); $('#main').scrollTop = 0; }
+          if (stageChanged) { drawStage(); window.scrollTo(0, 0); }
         },
       });
     }

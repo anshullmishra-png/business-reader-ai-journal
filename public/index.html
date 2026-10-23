@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Business Reads Journal</title>
   <meta name="description" content="Turn daily business reading into Chief of Staff interview practice.">
+  <meta name="theme-color" content="#002D72">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/layout.css">
@@ -17,57 +20,52 @@
   <a class="visually-hidden" href="#content">Skip to content</a>
   <div class="app" id="app" data-dict-open="false">
 
-    <aside class="sidebar" aria-label="Main navigation">
-      <a class="brand" href="/" data-link>
-        <span class="brand-mark" data-icon="notebook-pen"></span>
-        <span class="brand-name">Business Reads<br>Journal</span>
-      </a>
-      <nav class="nav">
-        <div class="nav-section">
-          <div class="nav-heading">Practice</div>
-          <a class="nav-link" href="/" data-link data-nav="/"><span data-icon="sun"></span>Today</a>
-          <a class="nav-link" href="/history" data-link data-nav="/history"><span data-icon="history"></span>History</a>
-        </div>
-        <div class="nav-section">
-          <div class="nav-heading">Learn</div>
-          <a class="nav-link" href="/glossary" data-link data-nav="/glossary"><span data-icon="book-a"></span>Glossary</a>
-          <a class="nav-link" href="/progress" data-link data-nav="/progress"><span data-icon="chart-line"></span>Progress</a>
-          <a class="nav-link" href="/reviews" data-link data-nav="/reviews"><span data-icon="file-text"></span>Weekly reviews</a>
-        </div>
-        <div class="nav-section">
-          <div class="nav-heading">App</div>
-          <a class="nav-link" href="/settings" data-link data-nav="/settings"><span data-icon="settings"></span>Settings</a>
-          <a class="nav-link" href="/about" data-link data-nav="/about"><span data-icon="info"></span>About</a>
-        </div>
-      </nav>
-      <div class="profile">
-        <span class="avatar" id="profile-avatar" aria-hidden="true">·</span>
-        <div>
-          <div class="profile-name" id="profile-name">Reader</div>
-          <div class="profile-meta" id="profile-meta">Local · private</div>
+    <header class="header" id="app-header" hidden>
+      <div class="header-inner">
+        <a class="brand" href="/" data-link>
+          <span class="brand-mark" data-icon="notebook-pen"></span>
+          <span class="brand-name">Business Reads</span>
+        </a>
+        <nav class="topnav" aria-label="Main">
+          <a href="/" data-link data-nav="/">Today</a>
+          <a href="/history" data-link data-nav="/history">History</a>
+          <a href="/glossary" data-link data-nav="/glossary">Glossary</a>
+          <a href="/progress" data-link data-nav="/progress">Progress</a>
+          <a href="/reviews" data-link data-nav="/reviews">Reviews</a>
+        </nav>
+        <div class="header-right">
+          <button class="icon-btn" id="pdf-btn" type="button" aria-label="Download PDF" title="Download PDF" hidden>
+            <span data-icon="download"></span>
+          </button>
+          <button class="icon-btn" id="dict-toggle" type="button" aria-label="Open dictionary" title="Dictionary (/)">
+            <span data-icon="book-a"></span>
+          </button>
+          <button class="profile-btn" id="profile-btn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="avatar" id="profile-avatar" aria-hidden="true">·</span>
+            <span class="profile-name" id="profile-name"></span>
+          </button>
         </div>
       </div>
-    </aside>
-
-    <header class="header">
-      <div class="header-left">
-        <span class="header-title" id="header-title"></span>
-        <span class="pill" id="header-pill" hidden></span>
-      </div>
-      <ol class="stepper" id="stepper" aria-label="Session stages" hidden></ol>
-      <div class="header-right">
-        <button class="icon-btn" id="pdf-btn" type="button" aria-label="Download PDF" title="Download PDF" disabled>
-          <span data-icon="download"></span>
-        </button>
-        <button class="icon-btn dict-toggle" id="dict-toggle" type="button" aria-label="Open dictionary" title="Dictionary (/)">
-          <span data-icon="book-a"></span>
-        </button>
+      <div class="profile-menu" id="profile-menu" role="menu" hidden>
+        <div class="menu-email" id="menu-email"></div>
+        <a href="/settings" data-link role="menuitem"><span data-icon="settings"></span>Settings</a>
+        <a href="/extension" data-link role="menuitem"><span data-icon="puzzle"></span>Browser extension</a>
+        <a href="/about" data-link role="menuitem"><span data-icon="info"></span>About</a>
+        <button type="button" id="signout-btn" role="menuitem"><span data-icon="log-out"></span>Sign out</button>
       </div>
     </header>
 
     <main class="main" id="main">
       <div class="content" id="content" tabindex="-1"></div>
     </main>
+
+    <nav class="tabbar" id="tabbar" aria-label="Main" hidden>
+      <a href="/" data-link data-nav="/"><span data-icon="sun"></span>Today</a>
+      <a href="/history" data-link data-nav="/history"><span data-icon="history"></span>History</a>
+      <a href="/glossary" data-link data-nav="/glossary"><span data-icon="book-a"></span>Glossary</a>
+      <a href="/progress" data-link data-nav="/progress"><span data-icon="chart-line"></span>Progress</a>
+      <a href="/settings" data-link data-nav="/settings"><span data-icon="user"></span>Account</a>
+    </nav>
 
     <div class="dict-scrim" id="dict-scrim"></div>
     <aside class="dict" id="dict" aria-label="Dictionary"></aside>

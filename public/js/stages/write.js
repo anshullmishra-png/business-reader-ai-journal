@@ -30,7 +30,7 @@ const fmtElapsed = (ms) => {
 export function renderWrite(container, session, { onSubmitted }) {
   const id = session.id;
   const draft = loadDraft(id);
-  const templateOn = draft.template ?? Boolean(appState.settings?.template_default);
+  const templateOn = draft.template ?? Boolean(appState.user?.template_default);
   let startedAt = draft.startedAt ?? null;
 
   container.innerHTML = html`
@@ -112,8 +112,8 @@ export function renderWrite(container, session, { onSubmitted }) {
     update();
     editor.focus();
     // Remember the choice for next time.
-    api('/settings', { method: 'PATCH', body: { template_default: toggle.checked } })
-      .then((s) => { appState.settings = s; })
+    api('/me/settings', { method: 'PATCH', body: { template_default: toggle.checked } })
+      .then((u) => { appState.user = u; })
       .catch(() => {});
   });
 

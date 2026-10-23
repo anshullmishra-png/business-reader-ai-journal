@@ -1,43 +1,41 @@
 import { api } from './lib/api.js';
 import { loadIcons, hydrateIcons } from './lib/icons.js';
-import { initDictionary, setProfile } from './shell.js';
+import { initDictionary, initProfileMenu, setProfile } from './shell.js';
 import { initRouter, render } from './router.js';
 
-export const appState = { health: null, settings: null, ai: null };
+// user: the signed-in reader (null when signed out). ai: { configured, calls_today, daily_limit }.
+export const appState = { user: null, ai: null };
+
+/** Reloads the signed-in user (after sign-in or a settings change). */
+export async function loadMe() {
+  try {
+    const { ai, ...user } = await api('/me');
+    appState.user = user;
+    appState.ai = ai;
+    setProfile(user);
+  } catch (err) {
+    if (err.status !== 401) throw err;
+    appState.user = null;
+    appState.ai = null;
+  }
+  return appState.user;
+}
 
 async function boot() {
   await loadIcons();
   hydrateIcons(document);
   initDictionary();
-
-  const [health, settings, ai] = await Promise.all([api('/health'), api('/settings'), api('/ai/health')]);
-  appState.health = health;
-  appState.settings = settings;
-  appState.ai = ai;
-  setProfile({ name: settings.name, demo: health.demo });
-
+  initProfileMenu();
+  await loadMe();
   initRouter();
   await render();
-  watchAiCheck();
 
   // A weekly review is written quietly if one is due. No notification.
-  api('/reviews/check', { method: 'POST' }).catch(() => {});
-}
-
-// Pages don't wait for the startup AI check. If it ends in a problem,
-// re-render so AI pages switch to the setup screen.
-async function watchAiCheck() {
-  const failed = (s) => ['not_installed', 'not_logged_in', 'error'].includes(s);
-  while (appState.ai?.status === 'checking' || appState.ai?.checking) {
-    await new Promise((r) => setTimeout(r, 2000));
-    const before = appState.ai.status;
-    appState.ai = await api('/ai/health').catch(() => appState.ai);
-    if (failed(appState.ai.status) && !failed(before)) render();
-  }
+  if (appState.user) api('/reviews/check', { method: 'POST' }).catch(() => {});
 }
 
 boot().catch((err) => {
   console.error(err);
   document.querySelector('#content').innerHTML =
-    '<div class="empty"><div class="empty-title">The app could not start</div>Is the server window still open? Try restarting start.bat.</div>';
+    '<div class="empty"><div class="empty-title">The app could not start</div>Check your connection and refresh the page.</div>';
 });

@@ -1,17 +1,17 @@
-// Chart.js (vendored) with the app's monochrome theme. Loaded only when needed.
+// Chart.js (vendored) themed to the app's sapphire/gold palette. Loaded only when needed.
 let loading = null;
 
 export const C = {
-  ink: '#18181B',
-  mid: '#52525B',
-  light: '#A1A1AA',
-  faint: '#D4D4D8',
-  amber: '#8B1E2D', // the one accent: oxblood
-  grid: '#EEE6D6',
-  text: '#737373',
+  ink: '#002D72',   // sapphire
+  mid: '#1E88E5',   // royal blue
+  light: '#8C919B',
+  faint: '#D1D5DB',
+  amber: '#F9A825', // gold accent
+  grid: '#ECE9E2',
+  text: '#5F6878',
 };
 
-// Zinc series are told apart by line style too, not by shade alone.
+// Series are told apart by line style too, not by colour alone.
 export const SERIES = [
   { color: C.ink, dash: [] },
   { color: C.mid, dash: [6, 4] },
@@ -31,7 +31,7 @@ export function loadChart() {
 
 function applyTheme(Chart) {
   const d = Chart.defaults;
-  d.font.family = "'Satoshi', ui-sans-serif, system-ui, sans-serif";
+  d.font.family = "'Inter', ui-sans-serif, system-ui, sans-serif";
   d.font.size = 12;
   d.color = C.text;
   d.borderColor = C.grid;
@@ -90,7 +90,7 @@ export const endLabels = {
       while (placed.some((p) => Math.abs(p - y) < 13)) y += 13; // avoid overlaps
       placed.push(y);
       ctx.save();
-      ctx.font = "700 11px 'Satoshi', system-ui, sans-serif";
+      ctx.font = "700 11px 'Inter', system-ui, sans-serif";
       ctx.fillStyle = C.mid;
       ctx.textBaseline = 'middle';
       ctx.fillText(ds.label, pt.x + 10, y);

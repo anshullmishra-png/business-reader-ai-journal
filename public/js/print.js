@@ -59,7 +59,7 @@ function workOnNext(v) {
 
 // ---------- Session report ----------
 async function sessionReport(id) {
-  const [s, r, settings] = await Promise.all([api(`/sessions/${id}`), api(`/sessions/${id}/results`), api('/settings')]);
+  const [s, r, settings] = await Promise.all([api(`/sessions/${id}`), api(`/sessions/${id}/results`), api('/me')]);
   document.title = `${s.title} · Session report`;
   if (r.main?.status !== 'evaluated') {
     return html`<p class="r-prose">This session hasn't been scored yet. The report is available once the verdict is in.</p>`;
@@ -104,7 +104,7 @@ async function sessionReport(id) {
 
 // ---------- Weekly review report ----------
 async function reviewReport(id) {
-  const [{ reviews }, settings] = await Promise.all([api('/reviews'), api('/settings')]);
+  const [{ reviews }, settings] = await Promise.all([api('/reviews'), api('/me')]);
   const r = reviews.find((x) => x.id === Number(id));
   if (!r) return html`<p class="r-prose">Review not found.</p>`;
   const c = r.content;
@@ -139,7 +139,7 @@ async function reviewReport(id) {
 // ---------- Portfolio report ----------
 async function portfolioReport() {
   const [p, sessions, { reviews }, settings] = await Promise.all([
-    api('/progress?window=all'), api('/sessions'), api('/reviews'), api('/settings'),
+    api('/progress?window=all'), api('/sessions'), api('/reviews'), api('/me'),
   ]);
   document.title = 'Portfolio report · Business Reads Journal';
   const h = p.headline;
@@ -230,7 +230,7 @@ async function portfolioReport() {
       ${reviews.map((rv) => html`<div class="block"><div class="r-kicker">${fmtDate(rv.period_start)} – ${fmtDate(rv.period_end)}</div>
         <p class="r-prose"><strong>${rv.content.headline}</strong> ${rv.content.verdict}</p></div>`)}` : ''}
 
-    <p class="r-footer-note">Generated ${today()} by Business Reads Journal, a local app that uses Claude as a demanding interview tutor.
+    <p class="r-footer-note">Generated ${today()} by Business Reads Journal, an app that uses AI as a demanding interview tutor.
       Article text is never included in reports.</p>`;
 }
 

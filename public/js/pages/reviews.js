@@ -47,7 +47,8 @@ export default async function render(el) {
     const { reviews, pending, last_failed } = await api('/reviews');
     setHeader({ title: 'Weekly reviews', pdf: reviews.length ? `/print/review/${reviews[0].id}?autoprint` : null });
     el.innerHTML = html`
-      <h1 class="page-title">Weekly reviews</h1>
+      <div class="label page-kicker">Every Sunday</div>
+    <h1 class="page-title">Weekly reviews</h1>
       <p class="page-lede">Written after every 7 scored sessions or 7 days, whichever comes first, the next time you open the app.</p>
       <section class="section">
         ${pending ? html`<div class="card" style="margin-bottom:12px">

@@ -33,8 +33,8 @@ a { color: inherit; }
 @page {
   size: A4;
   margin: 16mm 16mm 18mm;
-  @bottom-left { content: "Business Reads Journal"; font-family: 'Satoshi', sans-serif; font-size: 8pt; color: #A3A3A3; }
-  @bottom-right { content: counter(page) " / " counter(pages); font-family: 'Satoshi', sans-serif; font-size: 8pt; color: #A3A3A3; }
+  @bottom-left { content: "Business Reads Journal"; font-family: 'Inter', sans-serif; font-size: 8pt; color: #A3A3A3; }
+  @bottom-right { content: counter(page) " / " counter(pages); font-family: 'Inter', sans-serif; font-size: 8pt; color: #A3A3A3; }
 }
 
 @media print {
@@ -45,7 +45,7 @@ a { color: inherit; }
 
 /* ---------- Typography ---------- */
 .r-kicker { font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); }
-.r-title { font-family: var(--font-content); font-weight: 900; font-size: 24pt; line-height: 1.1; letter-spacing: -0.02em; margin: 4pt 0 6pt; }
+.r-title { font-family: var(--font-content); font-weight: 800; font-size: 24pt; line-height: 1.1; letter-spacing: -0.02em; margin: 4pt 0 6pt; }
 .r-meta { display: flex; flex-wrap: wrap; gap: 2pt 10pt; font-size: 9pt; color: var(--text-muted); font-weight: 700; }
 .r-h2 {
   font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint);
@@ -57,7 +57,7 @@ a { color: inherit; }
 .r-small { font-size: 9pt; }
 .pre { white-space: pre-wrap; overflow-wrap: break-word; }
 
-.score { font-family: var(--font-content); font-weight: 900; font-variant-numeric: tabular-nums; }
+.score { font-family: var(--font-content); font-weight: 800; font-variant-numeric: tabular-nums; }
 .score-low { color: var(--score-low); }
 .score-mid { color: var(--score-mid); }
 .score-high { color: var(--score-high); }
@@ -74,7 +74,7 @@ a { color: inherit; }
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6pt; }
 .tile { border: 1px solid var(--border); border-radius: 6pt; padding: 7pt 9pt; break-inside: avoid; }
 .tile-label { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); }
-.tile-value { font-family: var(--font-content); font-weight: 900; font-size: 16pt; margin-top: 2pt; }
+.tile-value { font-family: var(--font-content); font-weight: 800; font-size: 16pt; margin-top: 2pt; }
 
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; }
 .list { margin: 0; padding-left: 14pt; }

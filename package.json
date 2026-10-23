@@ -6,12 +6,13 @@
   "type": "module",
   "main": "server/app.js",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "node server/local.js",
     "start": "node server/local.js",
-    "vendor": "node scripts/vendor.js"
+    "vendor": "node scripts/vendor.js",
+    "pack-extension": "node scripts/pack-extension.js"
   },
   "license": "MIT",
   "dependencies": {
@@ -26,8 +27,5 @@
   "devDependencies": {
     "chart.js": "^4.5.1",
     "lucide-static": "^1.48.0"
-  },
-  "allowScripts": {
-    "better-sqlite3@13.0.3": true
   }
 }

@@ -1,6 +1,0 @@
-/* Self-hosted Fontshare fonts (downloaded on first run, see public/fonts/README.md). */
-@font-face { font-family: 'Satoshi'; src: url('/fonts/Satoshi-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Satoshi'; src: url('/fonts/Satoshi-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Satoshi'; src: url('/fonts/Satoshi-900.woff2') format('woff2'); font-weight: 900; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Zodiak'; src: url('/fonts/Zodiak-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: 'Zodiak'; src: url('/fonts/Zodiak-900.woff2') format('woff2'); font-weight: 900; font-style: normal; font-display: swap; }

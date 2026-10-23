@@ -2,14 +2,15 @@
 //   async function render(el, params) -> optional cleanup function
 import { $ } from './lib/dom.js';
 import { hydrateIcons } from './lib/icons.js';
-import { setActiveNav, setHeader } from './shell.js';
+import { setActiveNav, setHeader, showChrome } from './shell.js';
 import { appState } from './app.js';
 
-// needsAi: show the setup screen instead until Claude Code is ready.
-// Other pages (history, glossary, progress…) stay usable without AI.
+// public: reachable while signed out (sign-in pages). Everything else needs an account.
 const routes = [
-  { path: /^\/$/, load: () => import('./pages/today.js'), needsAi: true },
-  { path: /^\/session\/(?<id>\d+)$/, load: () => import('./pages/session.js'), needsAi: true },
+  { path: /^\/signin$/, load: () => import('./pages/auth.js'), public: true },
+  { path: /^\/signup$/, load: () => import('./pages/auth.js'), public: true },
+  { path: /^\/$/, load: () => import('./pages/today.js') },
+  { path: /^\/session\/(?<id>\d+)$/, load: () => import('./pages/session.js') },
   { path: /^\/history$/, load: () => import('./pages/history.js') },
   { path: /^\/glossary$/, load: () => import('./pages/glossary.js') },
   { path: /^\/progress$/, load: () => import('./pages/progress.js') },
@@ -26,30 +27,34 @@ export async function render() {
   const token = ++renderToken;
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const match = routes.map((r) => ({ r, m: path.match(r.path) })).find((x) => x.m);
-  // Only a confirmed problem shows the setup screen; "still checking" doesn't block.
-  const blocked = match?.r.needsAi && ['not_installed', 'not_logged_in', 'error'].includes(appState.ai?.status);
-  const mod = await (blocked
-    ? import('./pages/setup.js')
-    : match ? match.r.load() : import('./pages/notfound.js'));
+
+  // Signed out → sign in (remembering where they were going); signed in → skip the auth pages.
+  if (!appState.user && !match?.r.public) {
+    const next = path === '/' ? '' : `?next=${encodeURIComponent(path)}`;
+    return navigate(`/signin${next}`, { replace: true });
+  }
+  if (appState.user && match?.r.public) return navigate('/', { replace: true });
+
+  const mod = await (match ? match.r.load() : import('./pages/notfound.js'));
   if (token !== renderToken) return; // a newer navigation won
 
   if (typeof cleanup === 'function') cleanup();
   cleanup = null;
 
+  showChrome(Boolean(appState.user));
   const el = $('#content');
   el.innerHTML = '';
   setHeader();
   setActiveNav(path);
-  $('#main').scrollTop = 0;
+  window.scrollTo(0, 0);
 
   cleanup = await mod.default(el, match?.m.groups ?? {}, { onReady: render });
   hydrateIcons(el);
 }
 
 export function navigate(to, { replace = false } = {}) {
-  if (to === location.pathname + location.search) return;
-  history[replace ? 'replaceState' : 'pushState']({}, '', to);
-  render();
+  if (to !== location.pathname + location.search) history[replace ? 'replaceState' : 'pushState']({}, '', to);
+  return render();
 }
 
 export function initRouter() {

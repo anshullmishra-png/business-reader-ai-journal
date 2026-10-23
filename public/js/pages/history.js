@@ -40,8 +40,8 @@ export default async function render(el) {
 
   if (!sessions.length) {
     el.innerHTML = html`
-      <h1 class="page-title">History</h1>
-      <section class="section"><div class="empty">${drawing('newspaper')}
+      <header class="page-head"><div class="label">Archive</div><h1 class="page-title">History</h1></header>
+      <section class="card"><div class="empty">${drawing('newspaper')}
         <div class="empty-title">No sessions yet</div>Your sessions will be listed here once you read your first article.</div></section>`.toString();
     return;
   }
@@ -54,10 +54,10 @@ export default async function render(el) {
     </label>`;
 
   el.innerHTML = html`
-    <h1 class="page-title">History</h1>
-    <p class="page-lede">Every session you've started, newest first.</p>
+    <header class="page-head"><div class="label">Archive</div><h1 class="page-title">History</h1>
+    <p class="page-lede">Every session you've started, newest first.</p></header>
 
-    <section class="section">
+    <section class="card filter-card">
       <div class="history-filters">
         ${select('f-source', 'Source', { '': 'All sources', ...SOURCE_LABELS }, f.source)}
         ${select('f-sector', 'Sector', { '': 'All sectors', ...Object.fromEntries(sectors.map((s) => [s, s])) }, f.sector)}
@@ -66,7 +66,9 @@ export default async function render(el) {
         <label class="filter"><span class="filter-label">To</span><input class="input" type="date" id="f-to" value="${f.to}"></label>
         <button class="btn btn-ghost btn-sm" type="button" id="f-clear">Clear</button>
       </div>
-      <p class="hint" id="f-count" style="margin:14px 0 10px"></p>
+    </section>
+    <section class="card list-card">
+      <div class="card-head"><h2 class="card-title">${raw(icon('history'))}Sessions</h2><span class="hint" id="f-count"></span></div>
       <div id="history-list"></div>
     </section>`.toString();
 
@@ -82,8 +84,8 @@ export default async function render(el) {
     $('#f-count', el).textContent = `${shown.length} of ${sessions.length} session${sessions.length === 1 ? '' : 's'}` +
       (avg ? ` · average score ${avg}` : '');
     $('#history-list', el).innerHTML = shown.length
-      ? html`${shown.map((s) => sessionCard(s, { showDate: true }))}`.toString()
-      : html`<div class="empty">${drawing('search')}<div class="empty-title">No sessions match these filters</div>Try a wider date range or clear the filters.</div>`.toString();
+      ? html`<div class="list">${shown.map((s) => sessionCard(s, { showDate: true }))}</div>`.toString()
+      : html`<div class="empty empty-compact">${drawing('search')}<div class="empty-title">No sessions match these filters</div>Try a wider date range or clear the filters.</div>`.toString();
     saveFilters(f);
   }
 

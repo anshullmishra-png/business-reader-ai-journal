@@ -188,7 +188,7 @@ export function renderVerdict(container, session, { setHeaderPill }) {
     const busyExtra = r.extras.some((x) => x.status !== 'evaluated' && x.eval_status !== 'failed' && x.gen_status !== 'failed');
     container.innerHTML = html`
       ${stageHeading('verdict')}
-      <section class="verdict-hero card card-ruled">
+      <section class="verdict-hero card">
         <div class="verdict-score">
           <span class="score score-xl ${scoreClass(r.overall_score)}" data-count-to="${r.overall_score}">${fmtScore(r.overall_score)}</span><span class="score-of">/10</span>
           <div class="verdict-split">

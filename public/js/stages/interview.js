@@ -103,13 +103,13 @@ export function renderInterview(container, { sessionId, setId, onProgress, onDon
       <div class="q-count">Question ${q.position} of ${q.total}</div>
       <h2 class="q-prompt">${q.prompt}</h2>
 
-      <div class="bento q-bento">
-        <div class="bento-tabs">
-          <span class="pill pill-dark">${TYPE_LABELS[q.type]}</span>
+      <div class="card q-card">
+        <div class="q-card-head">
+          <span class="pill pill-active">${TYPE_LABELS[q.type]}</span>
           <span class="pill">${q.framework}</span>
           ${q.cross_article ? html`<span class="pill">${raw(icon('link'))}Earlier article</span>` : ''}
         </div>
-        <div class="bento-body">
+        <div class="q-card-body">
           ${q.type === 'mcq'
             ? html`<div class="options" role="radiogroup" aria-label="Options">
                 ${q.options.map((o, i) => html`<button type="button" class="option" role="radio" aria-checked="false" data-option="${i}">

@@ -6,10 +6,10 @@ import { sourceMark } from './sourceMark.js';
 export function sessionCard(s, { showDate = false } = {}) {
   const done = s.stage === 'verdict' && s.overall_score != null;
   return html`
-    <a class="card card-ruled session-card" href="/session/${s.id}" data-link>
-      <div class="session-card-main">
-        <div class="session-card-title">${s.title}</div>
-        <div class="meta-row" style="margin-top:6px">
+    <a class="list-row session-row" href="/session/${s.id}" data-link>
+      <div class="list-row-main">
+        <div class="list-row-title">${s.title}</div>
+        <div class="meta-row">
           ${sourceMark(s.source)}
           ${s.tags?.sector ? html`<span>${s.tags.sector}</span>` : ''}
           <span>${plural(s.word_count, 'word')}</span>
@@ -17,7 +17,7 @@ export function sessionCard(s, { showDate = false } = {}) {
         </div>
       </div>
       ${done
-        ? html`<div class="session-card-score ${scoreClass(s.overall_score)}">${fmtScore(s.overall_score)}</div>`
-        : html`<span class="pill">${STAGE_LABELS[s.stage]}</span>`}
+        ? html`<span class="score-badge ${scoreClass(s.overall_score)}">${fmtScore(s.overall_score)}<small>/10</small></span>`
+        : html`<span class="pill pill-active">${STAGE_LABELS[s.stage]}</span>`}
     </a>`;
 }

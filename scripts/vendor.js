@@ -16,7 +16,7 @@ export const ICONS = [
   'link', 'file-text', 'refresh-cw', 'chevron-right', 'external-link',
   'trash-2', 'upload', 'shield-check', 'triangle-alert', 'panel-right',
   'circle-check', 'loader-circle', 'puzzle', 'copy', 'terminal', 'square-check',
-  'square', 'target', 'layers',
+  'square', 'target', 'layers', 'log-out', 'user', 'chevron-down', 'flame', 'gauge', 'calendar', 'arrow-up-right', 'mail', 'key-round',
 ];
 
 function copy(from, to) {

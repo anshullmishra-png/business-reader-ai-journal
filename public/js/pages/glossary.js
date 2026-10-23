@@ -99,6 +99,7 @@ export default async function render(el) {
   let data = await api('/glossary');
 
   el.innerHTML = html`
+    <div class="label page-kicker">Vocabulary</div>
     <h1 class="page-title">Glossary</h1>
     <p class="page-lede">Every term you've looked up. Saved terms open instantly, with no AI call.</p>
     <section class="section" id="glossary-main"></section>`.toString();

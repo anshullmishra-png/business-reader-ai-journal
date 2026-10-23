@@ -1,88 +1,115 @@
 import { html, raw, $, $$ } from '../lib/dom.js';
 import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
-import { setHeader } from '../shell.js';
+import { setHeader, STAGES } from '../shell.js';
 import { navigate } from '../router.js';
+import { appState } from '../app.js';
 import { sessionCard } from '../lib/sessionCard.js';
 import { drawing } from '../lib/drawings.js';
 
-// "The morning edition": a newspaper masthead with the day's numbers.
-// The streak is shown as a fact only; the app never nudges you about it.
-function masthead(sum) {
-  const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  const stats = [
-    sum.week
-      ? html`<span><strong>${sum.week}</strong> article${sum.week === 1 ? '' : 's'} read this week</span>`
-      : html`<span>No articles yet this week</span>`,
-    sum.streak > 1 ? html`<span><strong>${sum.streak}-day</strong> reading streak</span>` : '',
-    html`<span>Difficulty <strong>${sum.difficulty}</strong>/10</span>`,
-  ].filter(Boolean);
-  return html`
-    <header class="masthead">
-      <div class="masthead-top">
-        <span>No. ${Math.max(1, sum.total)}</span>
-        <span>${date}</span>
-        <span>Local edition</span>
-      </div>
-      <h1 class="masthead-title">The Morning Edition</h1>
-      <div class="masthead-stats">${stats}</div>
-    </header>`;
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
+
+// The day's numbers. The streak is shown as a fact only; the app never nudges you about it.
+function stats(sum) {
+  const items = [
+    ['calendar', 'This week', sum.week, sum.week === 1 ? 'article' : 'articles'],
+    ['flame', 'Streak', sum.streak, sum.streak === 1 ? 'day' : 'days'],
+    ['gauge', 'Difficulty', sum.difficulty, 'of 10'],
+    ['layers', 'All time', sum.total, sum.total === 1 ? 'session' : 'sessions'],
+  ];
+  return html`<div class="stat-grid">${items.map(([ic, label, n, unit]) => html`
+    <div class="card stat-card">
+      <div class="stat-label">${raw(icon(ic))}${label}</div>
+      <div class="stat-value"><span class="stat-num">${n}</span><span class="stat-unit">${unit}</span></div>
+    </div>`)}</div>`;
 }
 
 export default async function render(el) {
   setHeader({ title: 'Today' });
   const sum = await api('/summary').catch(() => ({ total: 0, week: 0, today: 0, streak: 0, difficulty: 3 }));
+  const first = appState.user?.name?.split(/\s+/)[0];
+  const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
 
   el.innerHTML = html`
-    ${masthead(sum)}
+    <header class="page-head">
+      <div class="label">${date}</div>
+      <h1 class="page-title">${greeting()}${first ? `, ${first}` : ''}</h1>
+      <p class="page-lede">Add today's article, write your brief, then face the interviewer.</p>
+    </header>
 
-    <section class="section">
-      <div class="bento">
-        <div class="bento-tabs" role="tablist" aria-label="How to add an article">
-          <button class="pill pill-tab" role="tab" type="button" data-mode="url" aria-selected="true">Paste link</button>
-          <button class="pill pill-tab" role="tab" type="button" data-mode="text" aria-selected="false">Paste text</button>
-        </div>
+    ${stats(sum)}
 
-        <form class="bento-body" id="form-url" data-panel="url">
-          <div class="row">
-            <label class="visually-hidden" for="add-url">Article link</label>
-            <input class="input input-bare" id="add-url" name="url" type="url" required autocomplete="off"
-                   placeholder="Paste an article link (The Arc, Entrackr, …)">
-            <button class="btn btn-primary" type="submit">Start session ${raw(icon('arrow-right'))}</button>
+    <div class="bento">
+      <div class="stack">
+        <section class="card add-card">
+          <div class="card-head">
+            <h2 class="card-title">${raw(icon('plus'))}Start a session</h2>
+            <div class="segmented" role="tablist" aria-label="How to add an article">
+              <button role="tab" type="button" data-mode="url" aria-selected="true">Paste link</button>
+              <button role="tab" type="button" data-mode="text" aria-selected="false">Paste text</button>
+            </div>
           </div>
-        </form>
 
-        <form class="bento-body" id="form-text" data-panel="text" hidden>
-          <div class="field">
-            <label class="label" for="add-title">Title</label>
-            <input class="input" id="add-title" name="title" required maxlength="300" placeholder="Article headline">
-          </div>
-          <div class="field">
-            <label class="label" for="add-text">Article text</label>
-            <textarea class="input textarea" id="add-text" name="text" required rows="7"
-                      placeholder="Paste the full article text"></textarea>
-          </div>
-          <div class="field">
-            <label class="label" for="add-link">Link <span class="hint">(optional)</span></label>
-            <input class="input" id="add-link" name="url" type="url" placeholder="https://…">
-          </div>
-          <div class="row" style="justify-content:flex-end;margin-top:14px">
-            <button class="btn btn-primary" type="submit">Start session ${raw(icon('arrow-right'))}</button>
-          </div>
-        </form>
+          <form id="form-url" data-panel="url">
+            <div class="row">
+              <label class="visually-hidden" for="add-url">Article link</label>
+              <input class="input" id="add-url" name="url" type="url" required autocomplete="off"
+                     placeholder="Paste an article link (The Arc, Entrackr, …)">
+              <button class="btn btn-primary" type="submit">Start ${raw(icon('arrow-right'))}</button>
+            </div>
+          </form>
 
-        <div class="bento-status" id="add-status" aria-live="polite"></div>
+          <form id="form-text" data-panel="text" hidden>
+            <div class="field">
+              <label class="field-label" for="add-title">Title</label>
+              <input class="input" id="add-title" name="title" required maxlength="300" placeholder="Article headline">
+            </div>
+            <div class="field">
+              <label class="field-label" for="add-text">Article text</label>
+              <textarea class="input textarea" id="add-text" name="text" required rows="7"
+                        placeholder="Paste the full article text"></textarea>
+            </div>
+            <div class="field">
+              <label class="field-label" for="add-link">Link <span class="hint">(optional)</span></label>
+              <input class="input" id="add-link" name="url" type="url" placeholder="https://…">
+            </div>
+            <div class="row row-end">
+              <button class="btn btn-primary" type="submit">Start session ${raw(icon('arrow-right'))}</button>
+            </div>
+          </form>
+
+          <div id="add-status" aria-live="polite"></div>
+        </section>
+
+        <section class="card list-card">
+          <div class="card-head">
+            <h2 class="card-title">${raw(icon('sun'))}Today's sessions</h2>
+            <a class="link-quiet" href="/history" data-link>All history ${raw(icon('chevron-right'))}</a>
+          </div>
+          <div id="today-list"></div>
+        </section>
       </div>
-      <p class="hint" style="margin-top:16px">
-        Reading on The Ken? Use the <strong>Send to Journal</strong> extension from the article tab:
-        it sends the full text you can see while logged in. <a href="/extension" data-link>Install it</a>.
-      </p>
-    </section>
 
-    <section class="section">
-      <h2 class="section-heading">Today's sessions</h2>
-      <div id="today-list"></div>
-    </section>`.toString();
+      <div class="stack">
+        <section class="card">
+          <h2 class="card-title">${raw(icon('target'))}How a session works</h2>
+          <ol class="tracker tracker-static">
+            ${STAGES.map((s) => html`<li class="tracker-step" data-state="todo">
+              <span class="tracker-node"></span>
+              <span class="tracker-text"><span class="tracker-title">${s.label}</span><span class="tracker-time">${s.hint}</span></span>
+            </li>`)}
+          </ol>
+        </section>
+        <section class="card card-accent">
+          <h2 class="card-title">${raw(icon('puzzle'))}Reading a paywalled story?</h2>
+          <p>The <strong>Send to Journal</strong> extension sends the full text you can see while logged in, straight from the article tab.</p>
+          <div><a class="btn btn-secondary" href="/extension" data-link>Install the extension</a></div>
+        </section>
+      </div>
+    </div>`.toString();
 
   // ---- Tabs ----
   const setMode = (mode) => {
@@ -145,13 +172,13 @@ export default async function render(el) {
     const list = await api('/sessions?scope=today').catch(() => null);
     if (!list) return;
     $('#today-list', el).innerHTML = list.length
-      ? html`${list.map(sessionCard)}`.toString()
-      : html`<div class="empty">${drawing('newspaper')}
+      ? html`<div class="list">${list.map(sessionCard)}</div>`.toString()
+      : html`<div class="empty empty-compact">${drawing('newspaper')}
           <div class="empty-title">Nothing read yet today</div>
           Paste a link above, or send an article from your browser with the extension.</div>`.toString();
   }
   await loadList();
-  const timer = setInterval(loadList, 10000);
+  const timer = setInterval(loadList, 15000);
   const onFocus = () => loadList();
   window.addEventListener('focus', onFocus);
 

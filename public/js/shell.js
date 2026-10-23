@@ -1,43 +1,38 @@
-// App chrome shared by every page: header, stepper, sidebar profile, dictionary panel.
-import { $, $$, html, raw, esc, toast } from './lib/dom.js';
+// App chrome shared by every page: header, profile menu, stage tracker, dictionary drawer.
+import { $, $$, html, raw, toast } from './lib/dom.js';
 import { icon } from './lib/icons.js';
 import { api } from './lib/api.js';
 import { entryHtml, entrySkeleton } from './lib/entry.js';
 
 export const STAGES = [
-  { key: 'add', label: 'Add' },
-  { key: 'write', label: 'Write' },
-  { key: 'explore', label: 'Explore' },
-  { key: 'interview', label: 'Interview' },
-  { key: 'verdict', label: 'Verdict' },
+  { key: 'add', label: 'Add', hint: 'Article captured and tagged' },
+  { key: 'write', label: 'Write', hint: '100–200 word comprehension' },
+  { key: 'explore', label: 'Explore', hint: 'Related reading' },
+  { key: 'interview', label: 'Interview', hint: '10 timed questions' },
+  { key: 'verdict', label: 'Verdict', hint: 'Scores and feedback' },
 ];
 
-// Called by each page on render. stage = current stage key, or null to hide the stepper.
-export function setHeader({ title = '', pill = null, stage = null, pdf = null } = {}) {
-  $('#header-title').textContent = title;
+// Called by each page on render. `pdf` shows the header download button.
+// (`pill` and `stage` are accepted for compatibility; the session page draws its own tracker.)
+export function setHeader({ title = '', pdf = null } = {}) {
   document.title = title ? `${title} · Business Reads Journal` : 'Business Reads Journal';
-
-  const pillEl = $('#header-pill');
-  pillEl.hidden = !pill;
-  pillEl.textContent = pill ?? '';
-
-  const stepper = $('#stepper');
-  stepper.hidden = !stage;
-  if (stage) {
-    const current = STAGES.findIndex((s) => s.key === stage);
-    stepper.innerHTML = STAGES.map((s, i) => {
-      const state = i < current ? 'done' : i === current ? 'current' : 'todo';
-      const dot = state === 'done' ? icon('check') : String(i + 1);
-      return `${i ? '<li class="step-sep" aria-hidden="true"></li>' : ''}
-        <li class="step" data-state="${state}" ${state === 'current' ? 'aria-current="step"' : ''}>
-          <span class="step-dot">${dot}</span><span class="step-label">${esc(s.label)}</span>
-        </li>`;
-    }).join('');
-  }
-
   const pdfBtn = $('#pdf-btn');
-  pdfBtn.disabled = !pdf;
+  pdfBtn.hidden = !pdf;
   pdfBtn.onclick = pdf ? () => window.open(pdf, '_blank') : null;
+}
+
+/** Vertical stage tracker: completed in emerald, current in gold, the rest grey. */
+export function trackerHtml(stage, { times = {} } = {}) {
+  const current = STAGES.findIndex((s) => s.key === stage);
+  return html`<ol class="tracker" aria-label="Session stages">
+    ${STAGES.map((s, i) => {
+      const state = i < current || (stage === 'verdict' && i === current && times.verdictDone) ? 'done' : i === current ? 'current' : 'todo';
+      return html`<li class="tracker-step" data-state="${state}" ${state === 'current' ? raw('aria-current="step"') : ''}>
+        <span class="tracker-node">${state === 'done' ? raw(icon('check')) : state === 'current' ? raw(icon('arrow-right')) : ''}</span>
+        <span class="tracker-text"><span class="tracker-title">${s.label}</span><span class="tracker-time">${times[s.key] ?? s.hint}</span></span>
+      </li>`;
+    })}
+  </ol>`;
 }
 
 export function setActiveNav(path) {
@@ -49,17 +44,35 @@ export function setActiveNav(path) {
   }
 }
 
-export function setProfile({ name, demo }) {
+export function setProfile({ name, email }) {
   const display = name?.trim() || 'Reader';
-  $('#profile-name').textContent = display;
-  $('#profile-avatar').textContent = display
-    .split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  $('#profile-meta').innerHTML = demo
-    ? '<span class="pill pill-dark" style="height:18px;font-size:10px">Demo</span>'
-    : 'Local · private';
+  $('#profile-name').textContent = display.split(/\s+/)[0];
+  $('#profile-avatar').textContent = display.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  $('#menu-email').textContent = email ?? '';
 }
 
-// ---------- Dictionary panel (lookups arrive in phase 8) ----------
+/** Shows or hides the signed-in chrome (header, tab bar). */
+export function showChrome(signedIn) {
+  $('#app-header').hidden = !signedIn;
+  $('#tabbar').hidden = !signedIn;
+  document.body.classList.toggle('signed-out', !signedIn);
+}
+
+export function initProfileMenu() {
+  const btn = $('#profile-btn');
+  const menu = $('#profile-menu');
+  const setOpen = (open) => { menu.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
+  btn.addEventListener('click', (e) => { e.stopPropagation(); setOpen(menu.hidden); });
+  document.addEventListener('click', (e) => { if (!menu.hidden && !menu.contains(e.target)) setOpen(false); });
+  menu.addEventListener('click', (e) => { if (e.target.closest('a')) setOpen(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  $('#signout-btn').addEventListener('click', async () => {
+    await api('/auth/signout', { method: 'POST' }).catch(() => {});
+    location.href = '/signin';
+  });
+}
+
+// ---------- Dictionary drawer ----------
 export function initDictionary() {
   const app = $('#app');
   const panel = $('#dict');
@@ -67,7 +80,7 @@ export function initDictionary() {
     <div class="dict-top">
       <div class="dict-title">
         <span>Dictionary</span>
-        <button class="icon-btn dict-close" id="dict-close" type="button" aria-label="Close dictionary">${raw(icon('x'))}</button>
+        <button class="icon-btn" id="dict-close" type="button" aria-label="Close dictionary">${raw(icon('x'))}</button>
       </div>
       <form class="dict-input-wrap" id="dict-form" role="search">
         <label class="visually-hidden" for="dict-input">Look up a business term</label>
@@ -78,10 +91,10 @@ export function initDictionary() {
     </div>
     <div class="dict-body" id="dict-body" aria-live="polite">
       <p class="dict-empty">Type a term like <em>contribution margin</em> or <em>take rate</em>.
-        Press <span class="kbd">/</span> from anywhere to jump here.</p>
+        Press <span class="kbd">/</span> from anywhere to open the dictionary.</p>
     </div>
     <div class="dict-foot">
-      <a class="link-quiet" href="/glossary" data-link>${raw(icon('book-a'))}Open glossary</a>
+      <a class="link-quiet" href="/glossary" data-link>${raw(icon('book-a'))}Open your glossary</a>
     </div>`.toString();
 
   const setOpen = (open) => { app.dataset.dictOpen = String(open); };
@@ -94,7 +107,7 @@ export function initDictionary() {
     if (term) lookupTerm(term);
   });
 
-  // Entries can appear in the panel or on the glossary page; handle their buttons everywhere.
+  // Entries can appear in the drawer or on the glossary page; handle their buttons everywhere.
   document.addEventListener('click', async (e) => {
     const rel = e.target.closest('[data-lookup]');
     if (rel) {
@@ -120,11 +133,11 @@ export function initDictionary() {
     }
   });
 
-  // "/" focuses the dictionary unless the user is typing somewhere.
+  // "/" opens the dictionary unless the user is typing somewhere.
   document.addEventListener('keydown', (e) => {
     const t = e.target;
     const typing = t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
-    if (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey && !document.body.classList.contains('signed-out')) {
       e.preventDefault();
       setOpen(true);
       $('#dict-input').focus();
