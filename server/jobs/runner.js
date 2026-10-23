@@ -1,49 +1,59 @@
-// Background AI jobs, stored in the `jobs` table so they survive a restart.
-// Jobs start as soon as they're queued; the Claude bridge's own queue keeps
-// at most N calls running at once.
+// Background AI jobs, stored in the `jobs` table. A job starts right after it's
+// queued and keeps running after the HTTP response through Vercel's waitUntil
+// (locally it's just a detached promise). If a job is cut off, the next status
+// poll from that user picks it up again (resumeJobs).
+import { waitUntil } from '@vercel/functions';
 import { db, now } from '../db/index.js';
 
-/** @type {Record<string, { run: (job) => Promise<void>, fail: (job, err) => void }>} */
+/** @type {Record<string, { run: (job) => Promise<void>, fail: (job, err) => Promise<void> }>} */
 const handlers = {};
+export function registerHandler(task, handler) { handlers[task] = handler; }
 
-export function registerHandler(task, handler) {
-  handlers[task] = handler;
+const MAX_ATTEMPTS = 3;
+const STALE_MS = 6 * 60 * 1000; // longer than the slowest AI call plus retries
+
+function keepAlive(promise) {
+  try { waitUntil(promise); } catch { /* not on Vercel: the promise just runs */ }
 }
 
-const insert = db.prepare(`INSERT INTO jobs (task, session_id, set_id, payload, status, created_at, updated_at)
-                           VALUES (?, ?, ?, ?, 'queued', ?, ?)`);
-const claim = db.prepare(`UPDATE jobs SET status = 'running', attempts = attempts + 1, updated_at = ?
-                          WHERE id = ? AND status = 'queued'`);
-const finish = db.prepare('UPDATE jobs SET status = ?, error = ?, updated_at = ? WHERE id = ?');
-const queued = db.prepare("SELECT * FROM jobs WHERE status = 'queued' ORDER BY id");
-
-export function enqueue(task, { sessionId = null, setId = null, payload = null } = {}) {
+export async function enqueue(task, { userId, sessionId = null, setId = null, payload = null }) {
   const t = now();
-  const { lastInsertRowid } = insert.run(task, sessionId, setId, payload ? JSON.stringify(payload) : null, t, t);
-  setImmediate(pump);
-  return Number(lastInsertRowid);
+  const { lastInsertRowid } = await db.run(
+    `INSERT INTO jobs (user_id, task, session_id, set_id, payload, status, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, 'queued', ?, ?)`, userId, task, sessionId, setId, payload ? JSON.stringify(payload) : null, t, t);
+  keepAlive(runJob(lastInsertRowid));
+  return lastInsertRowid;
 }
 
-function pump() {
-  for (const job of queued.all()) {
-    const handler = handlers[job.task];
-    if (!handler) continue;
-    if (claim.run(now(), job.id).changes === 0) continue; // someone else took it
-    const parsed = { ...job, payload: job.payload ? JSON.parse(job.payload) : null };
-    handler.run(parsed).then(
-      () => finish.run('done', null, now(), job.id),
-      (err) => {
-        console.warn(`[jobs] ${job.task} #${job.id} failed: ${err.message}`);
-        finish.run('failed', String(err.message).slice(0, 500), now(), job.id);
-        try { handler.fail(parsed, err); } catch (e) { console.error(e); }
-      },
-    );
+async function runJob(id) {
+  const t = now();
+  // Claim atomically, so two pollers never run the same job.
+  const { changes } = await db.run(
+    `UPDATE jobs SET status = 'running', attempts = attempts + 1, updated_at = ? WHERE id = ? AND status = 'queued'`, t, id);
+  if (!changes) return;
+  const job = await db.get('SELECT * FROM jobs WHERE id = ?', id);
+  const handler = handlers[job.task];
+  const parsed = { ...job, payload: job.payload ? JSON.parse(job.payload) : null };
+  try {
+    if (!handler) throw new Error(`no handler for ${job.task}`);
+    await handler.run(parsed);
+    await db.run(`UPDATE jobs SET status = 'done', error = NULL, updated_at = ? WHERE id = ?`, now(), id);
+  } catch (err) {
+    console.warn(`[jobs] ${job.task} #${id} failed: ${err.message}`);
+    await db.run(`UPDATE jobs SET status = 'failed', error = ?, updated_at = ? WHERE id = ?`, String(err.message).slice(0, 500), now(), id);
+    try { await handler?.fail(parsed, err); } catch (e) { console.error(e); }
   }
 }
 
-// Call once at startup, after all handlers are registered.
-export function startJobs() {
-  // Anything "running" when the app last stopped never finished: run it again.
-  db.prepare("UPDATE jobs SET status = 'queued', updated_at = ? WHERE status = 'running'").run(now());
-  pump();
+/**
+ * Restarts this user's queued jobs and any "running" job that has gone quiet
+ * (its function was cut off). Called from the polling endpoints.
+ */
+export async function resumeJobs(userId) {
+  const cutoff = new Date(Date.now() - STALE_MS).toISOString();
+  await db.run(`UPDATE jobs SET status = 'queued', updated_at = ?
+                WHERE user_id = ? AND status = 'running' AND updated_at < ? AND attempts < ?`, now(), userId, cutoff, MAX_ATTEMPTS);
+  const stuck = await db.all(`SELECT id FROM jobs WHERE user_id = ? AND status = 'queued' AND updated_at < ?`,
+    userId, new Date(Date.now() - 15_000).toISOString());
+  for (const { id } of stuck) keepAlive(runJob(id));
 }

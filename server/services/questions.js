@@ -1,75 +1,63 @@
+// Question sets. Callers check session ownership first.
 import { db, now } from '../db/index.js';
 import { enqueue } from '../jobs/runner.js';
-import { getSetting } from './settings.js';
 
 /** Creates the session's main question set and queues generation. Idempotent. */
-export function createMainSet(sessionId) {
-  const existing = db.prepare("SELECT id FROM question_sets WHERE session_id = ? AND kind = 'main'").get(sessionId);
+export async function createMainSet(userId, sessionId) {
+  const existing = await db.get("SELECT id FROM question_sets WHERE session_id = ? AND kind = 'main'", sessionId);
   if (existing) return existing.id;
-  const { lastInsertRowid } = db.prepare(`
+  const { difficulty_level: level } = await db.get('SELECT difficulty_level FROM users WHERE id = ?', userId);
+  const { lastInsertRowid: setId } = await db.run(`
     INSERT INTO question_sets (session_id, kind, difficulty_at_time, gen_status, status, created_at)
-    VALUES (?, 'main', ?, 'pending', 'not_started', ?)`).run(sessionId, getSetting('difficulty_level'), now());
-  const setId = Number(lastInsertRowid);
-  enqueue('generate_questions', { sessionId, setId });
+    VALUES (?, 'main', ?, 'pending', 'not_started', ?)`, sessionId, level, now());
+  await enqueue('generate_questions', { userId, sessionId, setId });
   return setId;
 }
 
-export function getSet(setId) {
-  return db.prepare('SELECT * FROM question_sets WHERE id = ?').get(setId);
+export const getSet = (setId) => db.get('SELECT * FROM question_sets WHERE id = ?', setId);
+
+export async function getMainSet(sessionId) {
+  return (await db.get("SELECT * FROM question_sets WHERE session_id = ? AND kind = 'main'", sessionId)) ?? null;
 }
 
-export function getMainSet(sessionId) {
-  return db.prepare("SELECT * FROM question_sets WHERE session_id = ? AND kind = 'main'").get(sessionId) ?? null;
-}
+export const setGenStatus = (setId, status) => db.run('UPDATE question_sets SET gen_status = ? WHERE id = ?', status, setId);
 
-export function setGenStatus(setId, status) {
-  db.prepare('UPDATE question_sets SET gen_status = ? WHERE id = ?').run(status, setId);
-}
-
-export function retryGeneration(setId) {
-  const set = getSet(setId);
+export async function retryGeneration(userId, setId) {
+  const set = await getSet(setId);
   if (!set || set.gen_status !== 'failed') return false;
-  setGenStatus(setId, 'pending');
-  enqueue('generate_questions', { sessionId: set.session_id, setId });
+  await setGenStatus(setId, 'pending');
+  await enqueue('generate_questions', { userId, sessionId: set.session_id, setId });
   return true;
 }
 
 function shuffleMcq(q) {
   // Models favour certain answer positions; shuffle so the right answer is anywhere.
   const order = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
-  return {
-    ...q,
-    options: order.map((i) => q.options[i]),
-    correct_option: order.indexOf(q.correct_option),
-  };
+  return { ...q, options: order.map((i) => q.options[i]), correct_option: order.indexOf(q.correct_option) };
 }
 
-/** Stores a validated set of 10 questions and marks the set ready. */
-export function saveQuestions(setId, questions, { allowCrossArticle }) {
-  const insert = db.prepare(`
-    INSERT INTO questions (set_id, position, type, framework, prompt, options, correct_option, cross_article, model_answer)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-  db.transaction(() => {
-    db.prepare('DELETE FROM questions WHERE set_id = ?').run(setId); // a retry replaces any partial set
-    questions.forEach((raw, i) => {
+/** Stores a validated set of 10 questions and marks the set ready (a retry replaces any partial set). */
+export async function saveQuestions(setId, questions, { allowCrossArticle }) {
+  await db.batch([
+    ['DELETE FROM questions WHERE set_id = ?', setId],
+    ...questions.map((raw, i) => {
       const q = raw.type === 'mcq' ? shuffleMcq(raw) : raw;
-      insert.run(
+      return [`INSERT INTO questions (set_id, position, type, framework, prompt, options, correct_option, cross_article, model_answer)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         setId, i + 1, q.type, q.framework, q.prompt,
         q.options ? JSON.stringify(q.options) : null,
-        q.correct_option,
+        q.correct_option ?? null,
         allowCrossArticle && q.cross_article ? 1 : 0,
-        q.type === 'mcq' ? q.explanation : null, // MCQ "why" is revealed at the verdict
-      );
-    });
-    setGenStatus(setId, 'ready');
-  })();
+        q.type === 'mcq' ? q.explanation : null]; // the MCQ "why" is revealed at the verdict
+    }),
+    ["UPDATE question_sets SET gen_status = 'ready' WHERE id = ?", setId],
+  ]);
 }
 
-/** Compact summaries of recent sessions, for cross-article questions. */
-export function recentHistory(excludeSessionId, limit = 15) {
-  return db.prepare(`
-    SELECT title, tags, created_at FROM sessions
-    WHERE id != ? AND tags IS NOT NULL
-    ORDER BY created_at DESC LIMIT ?`).all(excludeSessionId, limit)
-    .map((r) => ({ title: r.title, tags: JSON.parse(r.tags), date: r.created_at.slice(0, 10) }));
+/** Compact summaries of the user's recent sessions, for cross-article questions. */
+export async function recentHistory(userId, excludeSessionId, limit = 15) {
+  const rows = await db.all(`SELECT title, tags, created_at FROM sessions
+                             WHERE user_id = ? AND id != ? AND tags IS NOT NULL
+                             ORDER BY created_at DESC LIMIT ?`, userId, excludeSessionId, limit);
+  return rows.map((r) => ({ title: r.title, tags: JSON.parse(r.tags), date: r.created_at.slice(0, 10) }));
 }

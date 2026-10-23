@@ -1,24 +1,24 @@
 {
   "name": "business-reads-journal",
   "version": "0.1.0",
-  "description": "Local-first journal that turns daily business reading into Chief of Staff interview practice.",
+  "description": "Turn daily business reading into Chief of Staff interview practice, scored by a tough AI interviewer.",
   "private": true,
   "type": "module",
-  "main": "server/index.js",
+  "main": "server/app.js",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "start": "node server/index.js",
-    "demo": "node server/index.js --demo --open",
-    "vendor": "node scripts/vendor.js",
-    "ai:smoke": "node scripts/ai-smoke.js",
-    "demo:reset": "node scripts/seed-demo.js --reset"
+    "dev": "node server/local.js",
+    "start": "node server/local.js",
+    "vendor": "node scripts/vendor.js"
   },
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^2.31.0",
+    "@libsql/client": "^0.18.0",
     "@mozilla/readability": "^0.6.0",
-    "better-sqlite3": "^13.0.3",
+    "@vercel/functions": "^3.10.3",
     "express": "^5.2.1",
     "jsdom": "^30.1.1",
     "zod": "^4.6.5"

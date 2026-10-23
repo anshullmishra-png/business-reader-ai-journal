@@ -1,8 +1,9 @@
 // Dictionary lookups (cache first), the glossary, and the Leitner vocab quiz.
+// Each user has their own glossary.
 import { db, now } from '../db/index.js';
-import { runTask } from '../ai/claudeBridge.js';
+import { runTask } from '../ai/gemini.js';
 import { defineTerm, moreExamples } from '../ai/prompts/dictionary.js';
-import { httpError } from './sessions.js';
+import { httpError } from './auth.js';
 
 // ---------- Normalisation: "CACs", " cac " and "CAC" are one entry ----------
 const KEEP_S = /(ss|us|is|ics|sis|ness|ous|as)$/; // business, bonus, analysis, economics, gross...
@@ -53,88 +54,90 @@ function hydrate(row) {
 const SELECT = `SELECT g.*, s.title AS first_session_title FROM glossary_terms g
                 LEFT JOIN sessions s ON s.id = g.first_session_id`;
 
-export function getTerm(id) {
-  const t = hydrate(db.prepare(`${SELECT} WHERE g.id = ?`).get(id));
+export async function getTerm(userId, id) {
+  const t = hydrate(await db.get(`${SELECT} WHERE g.id = ? AND g.user_id = ?`, id, userId));
   if (!t) throw httpError(404, 'Term not found');
   return t;
 }
 
-const byNormalized = (n) => db.prepare('SELECT id FROM glossary_terms WHERE term_normalized = ?').get(n);
+const byNormalized = (userId, n) => db.get('SELECT id FROM glossary_terms WHERE user_id = ? AND term_normalized = ?', userId, n);
 
-function recordLookup(termId, sessionId) {
-  db.transaction(() => {
-    db.prepare('UPDATE glossary_terms SET lookup_count = lookup_count + 1 WHERE id = ?').run(termId);
-    db.prepare('INSERT INTO glossary_lookups (term_id, session_id, created_at) VALUES (?, ?, ?)').run(termId, sessionId, now());
-  })();
+const recordLookup = (termId, sessionId) => db.batch([
+  ['UPDATE glossary_terms SET lookup_count = lookup_count + 1 WHERE id = ?', termId],
+  ['INSERT INTO glossary_lookups (term_id, session_id, created_at) VALUES (?, ?, ?)', termId, sessionId, now()],
+]);
+
+async function ownSession(userId, id) {
+  if (id == null) return null;
+  return (await db.get('SELECT id FROM sessions WHERE id = ? AND user_id = ?', id, userId)) ? id : null;
 }
 
-const sessionExists = (id) => id != null && Boolean(db.prepare('SELECT 1 FROM sessions WHERE id = ?').get(id));
-
-// In-flight AI lookups, so two quick clicks on the same new term make one call.
+// In-flight AI lookups (per instance), so two quick clicks on one new term make one call.
 const inflight = new Map();
 
 /**
  * Cache first: a saved term returns instantly with zero AI calls.
  * @returns {Promise<{ term: object, cached: boolean }>}
  */
-export async function lookup(rawTerm, sessionId = null) {
+export async function lookup(userId, rawTerm, sessionId = null) {
   const normalized = normalizeTerm(rawTerm);
   if (!normalized || normalized.length < 2) throw httpError(400, 'Type a term to look up.');
-  const linkSession = sessionExists(sessionId) ? sessionId : null;
+  const linkSession = await ownSession(userId, sessionId);
 
-  const hit = byNormalized(normalized);
+  const hit = await byNormalized(userId, normalized);
   if (hit) {
-    recordLookup(hit.id, linkSession);
-    return { term: getTerm(hit.id), cached: true };
+    await recordLookup(hit.id, linkSession);
+    return { term: await getTerm(userId, hit.id), cached: true };
   }
 
-  if (!inflight.has(normalized)) {
-    inflight.set(normalized, runTask(defineTerm({ term: String(rawTerm).trim() }))
-      .finally(() => inflight.delete(normalized)));
+  const key = `${userId}:${normalized}`;
+  if (!inflight.has(key)) {
+    inflight.set(key, runTask({ ...defineTerm({ term: String(rawTerm).trim() }), userId }).finally(() => inflight.delete(key)));
   }
-  const entry = await inflight.get(normalized);
+  const entry = await inflight.get(key);
   if (!entry.is_business_term) {
     throw httpError(422, `"${String(rawTerm).trim()}" doesn't look like a business term.`, { code: 'not_business' });
   }
 
   // Another request may have saved it while we waited.
-  const existing = byNormalized(normalized);
+  const existing = await byNormalized(userId, normalized);
   if (existing) {
-    recordLookup(existing.id, linkSession);
-    return { term: getTerm(existing.id), cached: true };
+    await recordLookup(existing.id, linkSession);
+    return { term: await getTerm(userId, existing.id), cached: true };
   }
   const { is_business_term: _, display_term, sector, ...stored } = entry;
-  const t = now();
-  const { lastInsertRowid } = db.prepare(`
-    INSERT INTO glossary_terms (term_normalized, display_term, entry, sector, lookup_count, first_session_id, created_at)
-    VALUES (?, ?, ?, ?, 0, ?, ?)`).run(normalized, display_term, JSON.stringify(stored), sector, linkSession, t);
-  recordLookup(Number(lastInsertRowid), linkSession);
-  return { term: getTerm(Number(lastInsertRowid)), cached: false };
+  const { lastInsertRowid: id } = await db.run(`
+    INSERT INTO glossary_terms (user_id, term_normalized, display_term, entry, sector, lookup_count, first_session_id, created_at)
+    VALUES (?, ?, ?, ?, ?, 0, ?, ?)`, userId, normalized, display_term, JSON.stringify(stored), sector, linkSession, now());
+  await recordLookup(id, linkSession);
+  return { term: await getTerm(userId, id), cached: false };
 }
 
-export async function addExamples(id) {
-  const t = getTerm(id);
-  const { examples } = await runTask(moreExamples({ term: t.term, existing: t.examples.map((e) => e.company) }));
-  const row = db.prepare('SELECT extra_examples FROM glossary_terms WHERE id = ?').get(id);
+export async function addExamples(userId, id) {
+  const t = await getTerm(userId, id);
+  const { examples } = await runTask({ ...moreExamples({ term: t.term, existing: t.examples.map((e) => e.company) }), userId });
+  const row = await db.get('SELECT extra_examples FROM glossary_terms WHERE id = ?', id);
   const extra = [...(row.extra_examples ? JSON.parse(row.extra_examples) : []), ...examples];
-  db.prepare('UPDATE glossary_terms SET extra_examples = ? WHERE id = ?').run(JSON.stringify(extra), id);
-  return getTerm(id);
+  await db.run('UPDATE glossary_terms SET extra_examples = ? WHERE id = ?', JSON.stringify(extra), id);
+  return getTerm(userId, id);
 }
 
-export function listTerms({ q = '', sort = 'az', sector = '' } = {}) {
+export async function listTerms(userId, { q = '', sort = 'az', sector = '' } = {}) {
   const order = { az: 'g.display_term COLLATE NOCASE ASC', count: 'g.lookup_count DESC, g.display_term COLLATE NOCASE',
     newest: 'g.created_at DESC' }[sort] ?? 'g.display_term COLLATE NOCASE ASC';
-  const where = [];
-  const params = [];
+  const where = ['g.user_id = ?'];
+  const params = [userId];
   if (q) { where.push('(g.display_term LIKE ? OR g.term_normalized LIKE ? OR g.entry LIKE ?)'); params.push(`%${q}%`, `%${q}%`, `%${q}%`); }
   if (sector) { where.push('g.sector = ?'); params.push(sector); }
-  return db.prepare(`${SELECT} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY ${order}`)
-    .all(...params).map(hydrate);
+  return (await db.all(`${SELECT} WHERE ${where.join(' AND ')} ORDER BY ${order}`, ...params)).map(hydrate);
 }
 
-export function deleteTerm(id) {
-  getTerm(id);
-  db.prepare('DELETE FROM glossary_terms WHERE id = ?').run(id);
+export async function deleteTerm(userId, id) {
+  await getTerm(userId, id);
+  await db.batch([
+    ['DELETE FROM glossary_lookups WHERE term_id = ?', id],
+    ['DELETE FROM glossary_terms WHERE id = ? AND user_id = ?', id, userId],
+  ]);
 }
 
 // ---------- Leitner quiz ----------
@@ -142,9 +145,9 @@ export function deleteTerm(id) {
 // up one box; a wrong one sends it back to box 1.
 export const INTERVAL_DAYS = { 1: 0, 2: 2, 3: 4, 4: 8, 5: 16 };
 
-export function boxCounts() {
+export async function boxCounts(userId) {
   const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  for (const r of db.prepare('SELECT leitner_box b, COUNT(*) n FROM glossary_terms GROUP BY leitner_box').all()) counts[r.b] = r.n;
+  for (const r of await db.all('SELECT leitner_box b, COUNT(*) n FROM glossary_terms WHERE user_id = ? GROUP BY leitner_box', userId)) counts[r.b] = r.n;
   return counts;
 }
 
@@ -164,8 +167,8 @@ const shuffle = (xs) => {
  * MCQs whose distractors are other saved definitions. If nothing is due,
  * falls back to the lowest boxes so a manual quiz is never empty.
  */
-export function buildQuiz(size = 10) {
-  const all = listTerms();
+export async function buildQuiz(userId, size = 10) {
+  const all = await listTerms(userId);
   if (!all.length) return { items: [], due: 0 };
   const nowMs = Date.now();
   const due = all.filter((t) => isDue(t, nowMs));
@@ -183,9 +186,9 @@ export function buildQuiz(size = 10) {
   return { items, due: due.length };
 }
 
-export function recordReview(id, correct) {
-  const t = getTerm(id);
+export async function recordReview(userId, id, correct) {
+  const t = await getTerm(userId, id);
   const box = correct ? Math.min(5, t.leitner_box + 1) : 1;
-  db.prepare('UPDATE glossary_terms SET leitner_box = ?, last_reviewed_at = ? WHERE id = ?').run(box, now(), id);
+  await db.run('UPDATE glossary_terms SET leitner_box = ?, last_reviewed_at = ? WHERE id = ?', box, now(), id);
   return { id, box };
 }

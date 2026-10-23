@@ -8,7 +8,7 @@ import { COMPREHENSION_DIMENSIONS } from '../ai/schemas.js';
 
 export const EXTRA_LEVELS = Object.keys(LEVEL_TO_DIFFICULTY);
 
-function setResult(set) {
+async function setResult(set) {
   const out = {
     id: set.id,
     kind: set.kind,
@@ -24,7 +24,7 @@ function setResult(set) {
     questions: [],
   };
   if (set.status === 'evaluated') {
-    out.questions = db.prepare('SELECT * FROM questions WHERE set_id = ? ORDER BY position').all(set.id).map((q) => ({
+    out.questions = (await db.all('SELECT * FROM questions WHERE set_id = ? ORDER BY position', set.id)).map((q) => ({
       position: q.position,
       type: q.type,
       framework: q.framework,
@@ -43,10 +43,10 @@ function setResult(set) {
   return out;
 }
 
-export function getResults(sessionId) {
-  const s = requireSession(sessionId);
+export async function getResults(userId, sessionId) {
+  const s = await requireSession(userId, sessionId);
   if (s.stage !== 'verdict') throw httpError(409, 'Results are available after the interview.');
-  const sets = db.prepare('SELECT * FROM question_sets WHERE session_id = ? ORDER BY id').all(sessionId);
+  const sets = await db.all('SELECT * FROM question_sets WHERE session_id = ? ORDER BY id', sessionId);
   const main = sets.find((x) => x.kind === 'main');
   return {
     session_id: s.id,
@@ -55,31 +55,28 @@ export function getResults(sessionId) {
     interview_score: s.interview_score,
     verdict: s.verdict,
     comprehension: (s.comprehension_eval ?? []).map((c) => ({ ...c, label: COMPREHENSION_DIMENSIONS[c.dimension] })),
-    main: main ? setResult(main) : null,
-    extras: sets.filter((x) => x.kind === 'extra').map(setResult),
+    main: main ? await setResult(main) : null,
+    extras: await Promise.all(sets.filter((x) => x.kind === 'extra').map(setResult)),
   };
 }
 
 /** Starts generating a 10-question extra round. One round at a time. */
-export function createExtraSet(sessionId, level) {
-  const s = requireSession(sessionId);
-  if (s.stage !== 'verdict' || s.overall_score == null) {
-    throw httpError(409, 'Extra rounds open once your verdict is in.');
-  }
-  const open = db.prepare(`SELECT id FROM question_sets WHERE session_id = ? AND kind = 'extra'
-    AND (status IN ('not_started', 'in_progress') OR (status = 'answered' AND eval_status != 'failed'))`).get(sessionId);
+export async function createExtraSet(userId, sessionId, level) {
+  const s = await requireSession(userId, sessionId);
+  if (s.stage !== 'verdict' || s.overall_score == null) throw httpError(409, 'Extra rounds open once your verdict is in.');
+  const open = await db.get(`SELECT id FROM question_sets WHERE session_id = ? AND kind = 'extra'
+    AND (status IN ('not_started', 'in_progress') OR (status = 'answered' AND eval_status != 'failed'))`, sessionId);
   if (open) throw httpError(409, 'Finish the current extra round first.');
-  const { lastInsertRowid } = db.prepare(`
+  const { lastInsertRowid: setId } = await db.run(`
     INSERT INTO question_sets (session_id, kind, level, difficulty_at_time, gen_status, status, created_at)
-    VALUES (?, 'extra', ?, ?, 'pending', 'not_started', ?)`).run(sessionId, level, LEVEL_TO_DIFFICULTY[level], now());
-  const setId = Number(lastInsertRowid);
-  enqueue('generate_questions', { sessionId, setId });
+    VALUES (?, 'extra', ?, ?, 'pending', 'not_started', ?)`, sessionId, level, LEVEL_TO_DIFFICULTY[level], now());
+  await enqueue('generate_questions', { userId, sessionId, setId });
   return setId;
 }
 
-export function startExtraSet(sessionId, setId) {
-  const { changes } = db.prepare(`UPDATE question_sets SET status = 'in_progress', started_at = ?
-    WHERE id = ? AND session_id = ? AND kind = 'extra' AND gen_status = 'ready' AND status = 'not_started'`)
-    .run(now(), setId, sessionId);
+export async function startExtraSet(userId, sessionId, setId) {
+  await requireSession(userId, sessionId);
+  const { changes } = await db.run(`UPDATE question_sets SET status = 'in_progress', started_at = ?
+    WHERE id = ? AND session_id = ? AND kind = 'extra' AND gen_status = 'ready' AND status = 'not_started'`, now(), setId, sessionId);
   if (changes === 0) throw httpError(409, 'This round is not ready to start, or has already started.');
 }

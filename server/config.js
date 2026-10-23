@@ -1,44 +1,37 @@
-// Loads config.json (committed defaults) merged with config.local.json
-// (gitignored personal overrides), plus command-line flags.
-import { readFileSync, existsSync, mkdirSync } from 'node:fs';
+// Runtime configuration, all from environment variables.
+// Locally they come from .env.local (loaded by server/local.js); on Vercel
+// from the project's environment settings.
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-function readJson(path) {
-  if (!existsSync(path)) return {};
-  return JSON.parse(readFileSync(path, 'utf8'));
-}
-
-function merge(base, over) {
-  const out = { ...base };
-  for (const [k, v] of Object.entries(over)) {
-    out[k] = v && typeof v === 'object' && !Array.isArray(v) ? merge(base[k] ?? {}, v) : v;
-  }
-  return out;
-}
-
-const args = new Set(process.argv.slice(2));
-const file = merge(readJson(join(ROOT, 'config.json')), readJson(join(ROOT, 'config.local.json')));
+const env = process.env;
 
 export const config = {
-  ...file,
-  // Never bind to anything but loopback, whatever the config says.
-  host: '127.0.0.1',
-  port: Number(process.env.PORT) || file.port || 4317,
-  demo: args.has('--demo'),
-  openBrowser: args.has('--open'),
+  // Turso in production; a local SQLite file for development.
+  dbUrl: env.TURSO_DATABASE_URL || `file:${join(ROOT, 'data', 'dev.db').replace(/\\/g, '/')}`,
+  dbAuthToken: env.TURSO_AUTH_TOKEN || undefined,
+
+  gemini: {
+    apiKey: env.GEMINI_API_KEY || '',
+    models: {
+      light: env.GEMINI_MODEL_LIGHT || 'gemini-2.5-flash-lite',
+      strong: env.GEMINI_MODEL_STRONG || 'gemini-2.5-flash',
+    },
+    timeoutMs: { light: 90_000, strong: 180_000 },
+  },
+
+  // Sign-up needs this code, so strangers can't use the Gemini quota.
+  inviteCode: env.INVITE_CODE || '',
+  // AI calls each person may make per day.
+  aiDailyLimit: Number(env.AI_DAILY_LIMIT) || 120,
+
+  isVercel: Boolean(env.VERCEL),
+  port: Number(env.PORT) || 4317,
 };
 
 export const paths = {
   root: ROOT,
   public: join(ROOT, 'public'),
-  migrations: join(ROOT, 'migrations'),
-  data: join(ROOT, 'data'),
-  tmpAi: join(ROOT, 'tmp-ai'),
-  db: join(ROOT, 'data', config.demo ? 'demo.db' : 'journal.db'),
 };
-
-mkdirSync(paths.data, { recursive: true });
-mkdirSync(paths.tmpAi, { recursive: true });

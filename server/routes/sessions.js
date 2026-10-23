@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { TagsEdit } from '../ai/schemas.js';
 import { fetchArticle, ExtractError, countWords } from '../services/extract.js';
 import {
-  createSession, getSession, requireSession, listSessions, listToday, setTags, retryTagging,
+  createSession, requireSession, listSessions, localMidnight, setTags, retryTagging,
   deleteSession, submitComprehension, startInterview, httpError, MIN_ARTICLE_WORDS,
 } from '../services/sessions.js';
 import { comprehensionWords, MIN_WORDS, MAX_WORDS } from '../services/words.js';
@@ -12,18 +12,25 @@ import { ensureRelated, listRelated, setRelatedDone } from '../services/related.
 import { currentQuestion, answerQuestion } from '../services/interview.js';
 import { getResults, createExtraSet, startExtraSet, EXTRA_LEVELS } from '../services/results.js';
 import { retryEvaluation } from '../services/evaluation.js';
+import { resumeJobs } from '../jobs/runner.js';
 
 // Session plus related reading and the status of its main question set
-// (never the questions themselves).
-function sessionView(id) {
-  let s = requireSession(id);
+// (never the questions themselves). Polling here also restarts any of the
+// user's background jobs that were cut off.
+async function sessionView(user, id) {
+  await resumeJobs(user.id);
+  let s = await requireSession(user.id, id);
   if (s.related_status === 'none') {
-    ensureRelated(id); // sessions captured before related reading existed
-    s = requireSession(id);
+    await ensureRelated(user.id, id);
+    s = await requireSession(user.id, id);
   }
-  const set = getMainSet(id);
+  let set = await getMainSet(id);
+  if (!set && s.stage !== 'write') {
+    await createMainSet(user.id, id); // self-heal if the set was never created
+    set = await getMainSet(id);
+  }
   s.main_set = set ? { id: set.id, gen_status: set.gen_status, status: set.status } : null;
-  s.related = s.related_status === 'ready' ? listRelated(id) : [];
+  s.related = s.related_status === 'ready' ? await listRelated(id) : [];
   return s;
 }
 
@@ -32,8 +39,9 @@ export const sessionsRouter = Router();
 const Id = z.coerce.number().int().positive();
 const MIN_PASTE_WORDS = 150;
 
-sessionsRouter.get('/', (req, res) => {
-  res.json(req.query.scope === 'today' ? listToday() : listSessions());
+sessionsRouter.get('/', async (req, res) => {
+  const since = req.query.scope === 'today' ? localMidnight(req.tz) : null;
+  res.json(await listSessions(req.user.id, { since }));
 });
 
 const Create = z.discriminatedUnion('mode', [
@@ -48,12 +56,13 @@ const Create = z.discriminatedUnion('mode', [
 
 sessionsRouter.post('/', async (req, res) => {
   const body = Create.parse(req.body);
+  const opts = { tzOffset: req.tz };
 
   if (body.mode === 'text') {
     if (countWords(body.text) < MIN_PASTE_WORDS) {
       throw httpError(422, `That's under ${MIN_PASTE_WORDS} words. Paste the full article text.`, { code: 'too_short' });
     }
-    return res.status(201).json(createSession({ url: body.url ?? null, title: body.title, text: body.text }));
+    return res.status(201).json(await createSession(req.user.id, { url: body.url ?? null, title: body.title, text: body.text }, opts));
   }
 
   let article;
@@ -69,17 +78,17 @@ sessionsRouter.post('/', async (req, res) => {
       'Use the Send to Journal extension from the article tab, or paste the text.',
       { code: 'too_short', title: article.title });
   }
-  res.status(201).json(createSession({
+  res.status(201).json(await createSession(req.user.id, {
     url: body.url, // keep the link the user pasted
     title: article.title,
     author: article.author,
     published_at: article.published_at,
     text: article.text,
-  }));
+  }, opts));
 });
 
-sessionsRouter.get('/:id', (req, res) => {
-  res.json(sessionView(Id.parse(req.params.id)));
+sessionsRouter.get('/:id', async (req, res) => {
+  res.json(await sessionView(req.user, Id.parse(req.params.id)));
 });
 
 // ---- Stage 2: Write ----
@@ -88,43 +97,46 @@ const Comprehension = z.object({
   seconds: z.number().int().min(0).max(24 * 3600),
 });
 
-sessionsRouter.post('/:id/comprehension', (req, res) => {
+sessionsRouter.post('/:id/comprehension', async (req, res) => {
   const id = Id.parse(req.params.id);
   const { text, seconds } = Comprehension.parse(req.body);
   const words = comprehensionWords(text);
   if (words < MIN_WORDS || words > MAX_WORDS) {
     throw httpError(422, `Your comprehension must be ${MIN_WORDS}–${MAX_WORDS} words. It's ${words}.`, { code: 'word_limit' });
   }
+  await submitComprehension(req.user.id, id, { text: text.trim(), seconds });
   // Question generation starts the moment the comprehension locks.
-  submitComprehension(id, { text: text.trim(), seconds, onLocked: () => createMainSet(id) });
-  res.json(sessionView(id));
+  await createMainSet(req.user.id, id);
+  res.json(await sessionView(req.user, id));
 });
 
 // ---- Stage 3: Explore ----
-sessionsRouter.patch('/:id/related/:itemId', (req, res) => {
+sessionsRouter.patch('/:id/related/:itemId', async (req, res) => {
   const id = Id.parse(req.params.id);
   const { done } = z.object({ done: z.boolean() }).parse(req.body);
-  requireSession(id);
-  if (!setRelatedDone(id, Id.parse(req.params.itemId), done)) throw httpError(404, 'Reading item not found');
-  res.json(sessionView(id));
+  await requireSession(req.user.id, id);
+  if (!(await setRelatedDone(id, Id.parse(req.params.itemId), done))) throw httpError(404, 'Reading item not found');
+  res.json(await sessionView(req.user, id));
 });
 
-sessionsRouter.post('/:id/related/retry', (req, res) => {
+sessionsRouter.post('/:id/related/retry', async (req, res) => {
   const id = Id.parse(req.params.id);
-  requireSession(id);
-  ensureRelated(id); // no-op unless it failed
-  res.json(sessionView(id));
+  await requireSession(req.user.id, id);
+  await ensureRelated(req.user.id, id); // no-op unless it failed
+  res.json(await sessionView(req.user, id));
 });
 
-sessionsRouter.post('/:id/interview/start', (req, res) => {
+sessionsRouter.post('/:id/interview/start', async (req, res) => {
   const id = Id.parse(req.params.id);
-  startInterview(id);
-  res.json(sessionView(id));
+  await startInterview(req.user.id, id);
+  res.json(await sessionView(req.user, id));
 });
 
 // ---- Stage 4: Interview (also used by extra rounds) ----
-sessionsRouter.get('/:id/sets/:setId/current', (req, res) => {
-  res.json(currentQuestion(Id.parse(req.params.id), Id.parse(req.params.setId)));
+sessionsRouter.get('/:id/sets/:setId/current', async (req, res) => {
+  const id = Id.parse(req.params.id);
+  await requireSession(req.user.id, id);
+  res.json(await currentQuestion(req.user, id, Id.parse(req.params.setId)));
 });
 
 const Answer = z.object({
@@ -133,63 +145,65 @@ const Answer = z.object({
   auto_submitted: z.boolean().default(false),
 });
 
-sessionsRouter.post('/:id/sets/:setId/answer', (req, res) => {
+sessionsRouter.post('/:id/sets/:setId/answer', async (req, res) => {
   const id = Id.parse(req.params.id);
   const setId = Id.parse(req.params.setId);
+  await requireSession(req.user.id, id);
   const a = Answer.parse(req.body);
-  const result = answerQuestion(id, setId, { questionId: a.question_id, answer: a.answer, autoSubmitted: a.auto_submitted });
-  res.json({ ...result, next: currentQuestion(id, setId) });
+  const result = await answerQuestion(req.user, id, setId, { questionId: a.question_id, answer: a.answer, autoSubmitted: a.auto_submitted });
+  res.json({ ...result, next: await currentQuestion(req.user, id, setId) });
 });
 
 // ---- Stage 5: Verdict, and Stage 6: extra rounds ----
-sessionsRouter.get('/:id/results', (req, res) => {
-  res.json(getResults(Id.parse(req.params.id)));
+sessionsRouter.get('/:id/results', async (req, res) => {
+  await resumeJobs(req.user.id);
+  res.json(await getResults(req.user.id, Id.parse(req.params.id)));
 });
 
-sessionsRouter.post('/:id/sets/:setId/evaluation/retry', (req, res) => {
+sessionsRouter.post('/:id/sets/:setId/evaluation/retry', async (req, res) => {
   const id = Id.parse(req.params.id);
-  const setId = Id.parse(req.params.setId);
-  requireSession(id);
-  retryEvaluation(setId);
-  res.json(getResults(id));
+  await requireSession(req.user.id, id);
+  await retryEvaluation(req.user.id, Id.parse(req.params.setId));
+  res.json(await getResults(req.user.id, id));
 });
 
-sessionsRouter.post('/:id/extra', (req, res) => {
+sessionsRouter.post('/:id/extra', async (req, res) => {
   const id = Id.parse(req.params.id);
   const { level } = z.object({ level: z.enum(EXTRA_LEVELS) }).parse(req.body);
-  createExtraSet(id, level);
-  res.status(201).json(getResults(id));
+  await createExtraSet(req.user.id, id, level);
+  res.status(201).json(await getResults(req.user.id, id));
 });
 
-sessionsRouter.post('/:id/sets/:setId/start', (req, res) => {
+sessionsRouter.post('/:id/sets/:setId/start', async (req, res) => {
   const id = Id.parse(req.params.id);
-  startExtraSet(id, Id.parse(req.params.setId));
-  res.json(getResults(id));
+  await startExtraSet(req.user.id, id, Id.parse(req.params.setId));
+  res.json(await getResults(req.user.id, id));
 });
 
-sessionsRouter.post('/:id/questions/retry', (req, res) => {
+sessionsRouter.post('/:id/questions/retry', async (req, res) => {
   const id = Id.parse(req.params.id);
-  const set = getMainSet(id);
+  await requireSession(req.user.id, id);
+  const set = await getMainSet(id);
   if (!set) throw httpError(409, 'Questions are generated after you submit your comprehension.');
-  retryGeneration(set.id);
-  res.json(sessionView(id));
+  await retryGeneration(req.user.id, set.id);
+  res.json(await sessionView(req.user, id));
 });
 
 // Tags stay editable at every stage: they're metadata, not a graded answer.
-sessionsRouter.put('/:id/tags', (req, res) => {
+sessionsRouter.put('/:id/tags', async (req, res) => {
   const id = Id.parse(req.params.id);
-  requireSession(id);
-  setTags(id, TagsEdit.parse(req.body), 'ready');
-  res.json(sessionView(id));
+  await requireSession(req.user.id, id);
+  await setTags(req.user.id, id, TagsEdit.parse(req.body), 'ready');
+  res.json(await sessionView(req.user, id));
 });
 
-sessionsRouter.post('/:id/tags/retry', (req, res) => {
+sessionsRouter.post('/:id/tags/retry', async (req, res) => {
   const id = Id.parse(req.params.id);
-  retryTagging(id);
-  res.json(sessionView(id));
+  await retryTagging(req.user.id, id);
+  res.json(await sessionView(req.user, id));
 });
 
-sessionsRouter.delete('/:id', (req, res) => {
-  deleteSession(Id.parse(req.params.id));
+sessionsRouter.delete('/:id', async (req, res) => {
+  await deleteSession(req.user.id, Id.parse(req.params.id));
   res.status(204).end();
 });

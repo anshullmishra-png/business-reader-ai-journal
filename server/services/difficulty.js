@@ -1,9 +1,8 @@
-// Adaptive difficulty (level 1-10), adjusted after each scored session:
+// Adaptive difficulty (level 1-10), per user, adjusted after each scored session:
 // up one if the average of the last 5 interview scores is >= 7, down one if
 // <= 4, otherwise hold. It only moves once 5 scores exist; every session
 // still records the level it ended on, for the step chart.
 import { db, now } from '../db/index.js';
-import { getSetting, setSetting } from './settings.js';
 
 export const WINDOW = 5;
 export const UP_AT = 7;
@@ -18,14 +17,16 @@ export function nextLevel(level, recentScores) {
 }
 
 /** Call once per session after its interview score is saved. Returns the new level. */
-export function adjustDifficulty(sessionId) {
-  const scores = db.prepare(`
-    SELECT score FROM question_sets
-    WHERE kind = 'main' AND score IS NOT NULL
-    ORDER BY completed_at DESC LIMIT ?`).all(WINDOW).map((r) => r.score);
-  const current = getSetting('difficulty_level');
+export async function adjustDifficulty(userId, sessionId) {
+  const scores = (await db.all(`
+    SELECT qs.score FROM question_sets qs JOIN sessions s ON s.id = qs.session_id
+    WHERE s.user_id = ? AND qs.kind = 'main' AND qs.score IS NOT NULL
+    ORDER BY qs.completed_at DESC LIMIT ?`, userId, WINDOW)).map((r) => r.score);
+  const { difficulty_level: current } = await db.get('SELECT difficulty_level FROM users WHERE id = ?', userId);
   const level = nextLevel(current, scores);
-  if (level !== current) setSetting('difficulty_level', level);
-  db.prepare('INSERT INTO difficulty_history (level, session_id, created_at) VALUES (?, ?, ?)').run(level, sessionId, now());
+  await db.batch([
+    ['UPDATE users SET difficulty_level = ? WHERE id = ?', level, userId],
+    ['INSERT INTO difficulty_history (user_id, level, session_id, created_at) VALUES (?, ?, ?, ?)', userId, level, sessionId, now()],
+  ]);
   return level;
 }
