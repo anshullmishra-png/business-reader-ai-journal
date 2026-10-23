@@ -6,7 +6,7 @@ import { enqueue } from '../jobs/runner.js';
 import { ensureRelated } from './related.js';
 import { httpError } from './auth.js';
 import { config } from '../config.js';
-import { appSpendToday, appSpendTotal } from '../ai/gemini.js';
+import { keyFor, AiError } from '../ai/gemini.js';
 
 export { httpError };
 export const MIN_ARTICLE_WORDS = 300;
@@ -32,7 +32,8 @@ export async function articlesToday(userId, tzOffset = 0) {
   return r.n;
 }
 
-// One new article per person per day, and none once the app's daily AI budget is nearly spent.
+// One new article per person per day; a paid account with no free fallback also
+// waits once the paid budget can't cover a whole article.
 async function checkArticleAllowance(userId, tzOffset) {
   const n = await articlesToday(userId, tzOffset);
   if (n >= config.articlesPerDay) {
@@ -40,11 +41,28 @@ async function checkArticleAllowance(userId, tzOffset) {
       ? "You've already started today's article. The next one unlocks tomorrow."
       : `You've started ${n} articles today, the daily limit. More unlock tomorrow.`, { code: 'article_limit' });
   }
-  if (await appSpendTotal() + ARTICLE_COST_USD > config.lifetimeBudgetUsd) {
-    throw httpError(429, 'Readout has used its AI credit, so new articles are paused until it is topped up.', { code: 'credit' });
+  try {
+    await keyFor(userId, ARTICLE_COST_USD);
+  } catch (err) {
+    if (!(err instanceof AiError)) throw err;
+    if (err.code === 'credit') {
+      throw httpError(429, 'Readout has used its AI credit, so new articles are paused until it is topped up.', { code: 'credit' });
+    }
+    if (err.code === 'budget') {
+      throw httpError(429, "Readout has used up today's AI budget, so new articles are paused until midnight UTC.", { code: 'budget' });
+    }
+    // not_configured: the article is still saved; the AI steps show the setup message.
   }
-  if (await appSpendToday() + ARTICLE_COST_USD > config.appDailyBudgetUsd) {
-    throw httpError(429, "Readout has used up today's AI budget, so new articles are paused until midnight UTC.", { code: 'budget' });
+}
+
+/** Why this user can't start an article right now, or null if they can. */
+export async function articleBlock(userId, tzOffset = 0) {
+  try {
+    await checkArticleAllowance(userId, tzOffset);
+    return null;
+  } catch (err) {
+    if (err.code) return { code: err.code, message: err.message };
+    throw err;
   }
 }
 

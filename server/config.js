@@ -17,7 +17,11 @@ export const config = {
   dbAuthToken: env.TURSO_AUTH_TOKEN || undefined,
 
   gemini: {
+    // Two keys: the paid key (prepaid credit, capped below) and a free-tier key
+    // from a Google project without billing. Accounts on the free plan only ever
+    // use the free key; paid accounts fall back to it once the paid caps are hit.
     apiKey: env.GEMINI_API_KEY || '',
+    freeApiKey: env.GEMINI_API_KEY_FREE || '',
     models: {
       light: env.GEMINI_MODEL_LIGHT || 'gemini-2.5-flash-lite',
       strong: env.GEMINI_MODEL_STRONG || 'gemini-2.5-flash',
@@ -25,8 +29,11 @@ export const config = {
     timeoutMs: { light: 90_000, strong: 180_000 },
   },
 
-  // Sign-up needs this code, so strangers can't use the Gemini quota.
+  // Sign-up needs one of these codes, so strangers can't use the Gemini quota.
+  // INVITE_CODE makes a free-plan account; INVITE_CODE_PAID a paid-plan one
+  // (and upgrades an existing account when entered in Settings).
   inviteCode: env.INVITE_CODE || '',
+  paidInviteCode: env.INVITE_CODE_PAID || '',
   // New articles each person may start per day (each one runs ~5 AI calls).
   articlesPerDay: Number(env.ARTICLES_PER_DAY) || 1,
   // Safety ceiling on AI calls per person per day: one article, its retries,

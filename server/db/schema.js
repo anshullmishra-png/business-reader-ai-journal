@@ -196,4 +196,12 @@ ALTER TABLE ai_calls ADD COLUMN cost_usd REAL NOT NULL DEFAULT 0;
 CREATE INDEX idx_ai_calls_created ON ai_calls (created_at);
 `,
   },
+  {
+    // Free and paid plans; which key each AI call used (only paid calls count against the budgets).
+    name: '003_plans',
+    sql: `
+ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'paid'));
+ALTER TABLE ai_calls ADD COLUMN key_tier TEXT NOT NULL DEFAULT 'paid';
+`,
+  },
 ];

@@ -7,7 +7,7 @@ import { config } from '../config.js';
 import { db, now } from '../db/index.js';
 
 export class AiError extends Error {
-  /** @param {'not_configured'|'quota'|'budget'|'credit'|'timeout'|'invalid_output'|'failed'} code */
+  /** @param {'not_configured'|'quota'|'busy'|'budget'|'credit'|'timeout'|'invalid_output'|'failed'} code */
   constructor(code, message, detail) {
     super(message);
     this.code = code;
@@ -18,6 +18,7 @@ export class AiError extends Error {
 const FRIENDLY = {
   not_configured: "The AI isn't configured on the server yet.",
   quota: "You've reached today's AI limit. It resets at midnight UTC.",
+  busy: "The free AI has hit Google's usage limit for now. Try again in a while.",
   budget: "Readout has used up today's AI budget. It resets at midnight UTC.",
   credit: 'Readout has used its AI credit. AI features are paused until it is topped up.',
   timeout: 'The AI took too long to answer. Try again.',
@@ -26,15 +27,18 @@ const FRIENDLY = {
 };
 export const friendlyMessage = (err) => (err instanceof AiError ? FRIENDLY[err.code] : null) ?? FRIENDLY.failed;
 
-let ai = null;
-const client = () => {
-  if (!config.gemini.apiKey) throw new AiError('not_configured', 'GEMINI_API_KEY is not set');
-  ai ??= new GoogleGenAI({ apiKey: config.gemini.apiKey });
-  return ai;
+const keyOf = (keyTier) => (keyTier === 'paid' ? config.gemini.apiKey : config.gemini.freeApiKey);
+const clients = {};
+const client = (keyTier) => {
+  const apiKey = keyOf(keyTier);
+  if (!apiKey) throw new AiError('not_configured', `no ${keyTier} Gemini key`);
+  clients[keyTier] ??= new GoogleGenAI({ apiKey });
+  return clients[keyTier];
 };
 
 // Never let a key travel upward in an error message.
-const redact = (msg) => (config.gemini.apiKey ? String(msg).split(config.gemini.apiKey).join('[key]') : String(msg));
+const redact = (msg) => [config.gemini.apiKey, config.gemini.freeApiKey]
+  .filter(Boolean).reduce((m, k) => m.split(k).join('[key]'), String(msg));
 
 // Paid-tier prices in USD per 1M tokens (ai.google.dev/gemini-api/docs/pricing).
 // Thinking tokens are billed as output.
@@ -52,13 +56,14 @@ function usageOf(model, meta) {
   return { input, output, thinking, cost: (input * p.input + (output + thinking) * p.output) / 1e6 };
 }
 
-async function logCall(userId, task, model, ms, ok, error, usage = null) {
+// Tokens are logged for both keys; only the paid key's calls carry a cost.
+async function logCall(userId, task, model, keyTier, ms, ok, error, usage = null) {
   const u = usage ?? { input: 0, output: 0, thinking: 0, cost: 0 };
-  await db.run(`INSERT INTO ai_calls (user_id, task, model, duration_ms, success, error,
+  await db.run(`INSERT INTO ai_calls (user_id, task, model, key_tier, duration_ms, success, error,
       input_tokens, output_tokens, thinking_tokens, cost_usd, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  userId, task, model, Math.round(ms), ok ? 1 : 0, error ? String(error).slice(0, 500) : null,
-  u.input, u.output, u.thinking, u.cost, now()).catch(() => {});
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  userId, task, model, keyTier, Math.round(ms), ok ? 1 : 0, error ? String(error).slice(0, 500) : null,
+  u.input, u.output, u.thinking, keyTier === 'paid' ? u.cost : 0, now()).catch(() => {});
 }
 
 const utcMidnight = () => `${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`;
@@ -74,14 +79,34 @@ export async function callsToday(userId) {
 
 /** What the whole app has ever spent on Gemini, in USD. */
 export async function appSpendTotal() {
-  const r = await db.get('SELECT COALESCE(SUM(cost_usd), 0) AS cost FROM ai_calls');
+  const r = await db.get("SELECT COALESCE(SUM(cost_usd), 0) AS cost FROM ai_calls WHERE key_tier = 'paid'");
   return r.cost;
 }
 
 /** What the whole app has spent on Gemini since UTC midnight, in USD. */
 export async function appSpendToday() {
-  const r = await db.get('SELECT COALESCE(SUM(cost_usd), 0) AS cost FROM ai_calls WHERE created_at >= ?', utcMidnight());
+  const r = await db.get("SELECT COALESCE(SUM(cost_usd), 0) AS cost FROM ai_calls WHERE key_tier = 'paid' AND created_at >= ?", utcMidnight());
   return r.cost;
+}
+
+/**
+ * Which Gemini key a user's next AI work runs on: 'paid' or 'free'.
+ * Free-plan accounts only ever use the free key. Paid-plan accounts use the paid
+ * key while the daily and lifetime budgets have room (`margin` reserves room for
+ * a whole article), then fall back to the free key.
+ */
+export async function keyFor(userId, margin = 0) {
+  const user = userId != null ? await db.get('SELECT plan FROM users WHERE id = ?', userId) : null;
+  const hasFree = Boolean(config.gemini.freeApiKey);
+  if (user?.plan === 'paid' && config.gemini.apiKey) {
+    const [total, today] = await Promise.all([appSpendTotal(), appSpendToday()]);
+    const creditLeft = total + margin < config.lifetimeBudgetUsd;
+    if (creditLeft && today + margin < config.appDailyBudgetUsd) return 'paid';
+    if (hasFree) return 'free';
+    throw creditLeft ? new AiError('budget', 'app daily AI budget reached') : new AiError('credit', 'lifetime AI budget reached');
+  }
+  if (hasFree) return 'free';
+  throw new AiError('not_configured', user?.plan === 'paid' ? 'no Gemini key set' : 'no free-tier Gemini key set');
 }
 
 function extractJson(text) {
@@ -93,13 +118,16 @@ function extractJson(text) {
   throw new SyntaxError('no JSON object in response');
 }
 
-async function attempt({ userId, task, model, system, prompt, jsonSchema, timeoutMs }) {
+// Google answers 429 / RESOURCE_EXHAUSTED when a key's rate or quota limit is hit.
+const isRateLimited = (err) => err?.status === 429 || /RESOURCE_EXHAUSTED|\b429\b|quota/i.test(String(err?.message ?? ''));
+
+async function attempt({ userId, task, model, keyTier, system, prompt, jsonSchema, timeoutMs }) {
   const t0 = performance.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let usage = null; // tokens are billed even when the reply can't be parsed
   try {
-    const res = await client().models.generateContent({
+    const res = await client(keyTier).models.generateContent({
       model,
       contents: prompt,
       config: {
@@ -112,16 +140,17 @@ async function attempt({ userId, task, model, system, prompt, jsonSchema, timeou
     });
     usage = usageOf(model, res.usageMetadata);
     const data = extractJson(res.text ?? '');
-    await logCall(userId, task, model, performance.now() - t0, true, null, usage);
+    await logCall(userId, task, model, keyTier, performance.now() - t0, true, null, usage);
     return data;
   } catch (err) {
     let e = err;
     if (!(err instanceof AiError)) {
       e = controller.signal.aborted ? new AiError('timeout', `timed out after ${timeoutMs}ms`)
         : err instanceof SyntaxError ? new AiError('invalid_output', err.message)
-          : new AiError('failed', redact(err?.message ?? err));
+          : isRateLimited(err) ? new AiError('busy', redact(err?.message ?? err))
+            : new AiError('failed', redact(err?.message ?? err));
     }
-    await logCall(userId, task, model, performance.now() - t0, false, `${e.code}: ${e.message}`, usage);
+    await logCall(userId, task, model, keyTier, performance.now() - t0, false, `${e.code}: ${e.message}`, usage);
     throw e;
   } finally {
     clearTimeout(timer);
@@ -134,9 +163,7 @@ async function attempt({ userId, task, model, system, prompt, jsonSchema, timeou
  * @param {{ userId:number, task:string, tier:'light'|'strong', system:string, prompt:string, schema:import('zod').ZodType }} o
  */
 export async function runTask({ userId, task, tier = 'light', system, prompt, schema }) {
-  if (!config.gemini.apiKey) throw new AiError('not_configured', 'GEMINI_API_KEY is not set');
-  if (await appSpendTotal() >= config.lifetimeBudgetUsd) throw new AiError('credit', 'lifetime AI budget reached');
-  if (await appSpendToday() >= config.appDailyBudgetUsd) throw new AiError('budget', 'app daily AI budget reached');
+  const keyTier = await keyFor(userId);
   if (userId != null) {
     const today = await callsToday(userId);
     if (today.total >= config.aiDailyLimit) throw new AiError('quota', 'daily AI limit reached');
@@ -144,7 +171,7 @@ export async function runTask({ userId, task, tier = 'light', system, prompt, sc
   const model = config.gemini.models[tier] ?? tier;
   const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' });
   delete jsonSchema.$schema;
-  const base = { userId, task, model, system, jsonSchema, timeoutMs: config.gemini.timeoutMs[tier] ?? 120_000 };
+  const base = { userId, task, model, keyTier, system, jsonSchema, timeoutMs: config.gemini.timeoutMs[tier] ?? 120_000 };
 
   let retriedTransport = false;
   let repaired = false;
@@ -154,7 +181,7 @@ export async function runTask({ userId, task, tier = 'light', system, prompt, sc
     try {
       raw = await attempt({ ...base, prompt: currentPrompt });
     } catch (err) {
-      if (['not_configured', 'quota', 'budget', 'credit'].includes(err.code) || retriedTransport) throw err;
+      if (['not_configured', 'quota', 'busy', 'budget', 'credit'].includes(err.code) || retriedTransport) throw err;
       retriedTransport = true;
       continue;
     }

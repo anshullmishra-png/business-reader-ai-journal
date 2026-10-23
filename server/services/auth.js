@@ -37,16 +37,31 @@ const sha256 = (s) => createHash('sha256').update(s).digest('hex');
 export const newCaptureToken = () => randomBytes(24).toString('base64url');
 
 export async function signUp({ name, email, password, invite }) {
-  if (!config.inviteCode) throw httpError(503, "Sign-up isn't open yet.");
-  if (!sameText(invite.trim(), config.inviteCode)) throw httpError(403, "That invite code isn't right.");
+  if (!config.inviteCode && !config.paidInviteCode) throw httpError(503, "Sign-up isn't open yet.");
+  const plan = planForCode(invite);
+  if (!plan) throw httpError(403, "That invite code isn't right.");
   const normalized = email.trim().toLowerCase();
   if (await db.get('SELECT 1 FROM users WHERE email = ?', normalized)) {
     throw httpError(409, 'An account with that email already exists. Sign in instead.');
   }
   const { lastInsertRowid } = await db.run(
-    `INSERT INTO users (email, name, password_hash, capture_token, created_at) VALUES (?, ?, ?, ?, ?)`,
-    normalized, name.trim(), await hashPassword(password), newCaptureToken(), now());
+    `INSERT INTO users (email, name, password_hash, capture_token, plan, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    normalized, name.trim(), await hashPassword(password), newCaptureToken(), plan, now());
   return createAuthSession(lastInsertRowid);
+}
+
+/** 'paid' for the paid code, 'free' for the free code, otherwise null. */
+function planForCode(code) {
+  const c = String(code ?? '').trim();
+  if (config.paidInviteCode && sameText(c, config.paidInviteCode)) return 'paid';
+  if (config.inviteCode && sameText(c, config.inviteCode)) return 'free';
+  return null;
+}
+
+/** Moves an account to the paid plan when the paid code is entered. */
+export async function redeemPaidCode(userId, code) {
+  if (planForCode(code) !== 'paid') throw httpError(403, "That code isn't right.");
+  await db.run("UPDATE users SET plan = 'paid' WHERE id = ?", userId);
 }
 
 export async function signIn({ email, password }) {
@@ -72,7 +87,7 @@ export async function signOut(token) {
 export async function userForToken(token) {
   if (!token) return null;
   return db.get(`SELECT u.id, u.email, u.name, u.timer_seconds, u.template_default, u.difficulty_level,
-                        u.capture_token, u.extension_origin
+                        u.capture_token, u.extension_origin, u.plan
                  FROM auth_sessions a JOIN users u ON u.id = a.user_id
                  WHERE a.token_hash = ? AND a.expires_at > ?`, sha256(token), now());
 }
@@ -106,7 +121,7 @@ export async function requireUser(req, res, next) {
 // ---- Per-user settings (stored on the users row) ----
 export function publicUser(u) {
   return {
-    id: u.id, email: u.email, name: u.name,
+    id: u.id, email: u.email, name: u.name, plan: u.plan,
     timer_seconds: u.timer_seconds, template_default: Boolean(u.template_default),
     difficulty_level: u.difficulty_level, capture_token: u.capture_token, extension_origin: u.extension_origin,
   };

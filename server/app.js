@@ -51,7 +51,7 @@ app.use((err, _req, res, _next) => {
     const first = err.issues[0];
     return res.status(400).json({ error: first?.message && !/^Invalid/.test(first.message) ? first.message : 'Check what you entered and try again.', issues: err.issues });
   }
-  if (err instanceof AiError) return res.status(['quota', 'budget', 'credit'].includes(err.code) ? 429 : 503).json({ error: friendlyMessage(err), code: err.code });
+  if (err instanceof AiError) return res.status(['quota', 'busy', 'budget', 'credit'].includes(err.code) ? 429 : 503).json({ error: friendlyMessage(err), code: err.code });
   if (err.type === 'entity.too.large') return res.status(413).json({ error: 'That article is too long.' });
   if (err.status) {
     const { status, message, code, title } = err;

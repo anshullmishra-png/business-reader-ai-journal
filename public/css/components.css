@@ -689,3 +689,5 @@ body.signed-out .content::before { display: none; }
 .usage-dl { margin: 18px 0; grid-template-columns: 1fr auto; font-family: var(--font-mono); font-size: 13px; }
 .usage-dl dd { text-align: right; }
 .usage-budget { margin-top: 4px; }
+.plan-row { margin-bottom: 18px; }
+.upgrade-form { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--rule); display: grid; gap: 8px; }

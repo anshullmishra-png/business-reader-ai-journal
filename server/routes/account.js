@@ -3,11 +3,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { config } from '../config.js';
-import { callsToday, appSpendToday, appSpendTotal } from '../ai/gemini.js';
-import { articlesToday } from '../services/sessions.js';
+import { callsToday, appSpendToday, appSpendTotal, keyFor } from '../ai/gemini.js';
+import { articlesToday, articleBlock } from '../services/sessions.js';
 import {
   signUp, signIn, signOut, readCookie, setSessionCookie, clearSessionCookie, requireUser,
-  publicUser, updateSettings, regenerateCaptureToken,
+  publicUser, updateSettings, regenerateCaptureToken, redeemPaidCode,
 } from '../services/auth.js';
 
 export const authRouter = Router();
@@ -42,13 +42,16 @@ authRouter.post('/signout', async (req, res) => {
 meRouter.use(requireUser);
 
 meRouter.get('/', async (req, res) => {
-  const [today, articles, appSpend, appTotal] = await Promise.all([
+  const [today, articles, appSpend, appTotal, block, keyNow] = await Promise.all([
     callsToday(req.user.id), articlesToday(req.user.id, req.tz), appSpendToday(), appSpendTotal(),
+    articleBlock(req.user.id, req.tz), keyFor(req.user.id).catch(() => null),
   ]);
   res.json({
     ...publicUser(req.user),
     ai: {
-      configured: Boolean(config.gemini.apiKey),
+      configured: Boolean(keyNow),
+      key_now: keyNow,
+      article_block: block,
       articles_today: articles,
       articles_per_day: config.articlesPerDay,
       calls_today: today.total,
@@ -74,6 +77,11 @@ meRouter.patch('/settings', async (req, res) => {
   await updateSettings(req.user.id, Patch.parse(req.body ?? {}));
   const u = await db.get('SELECT * FROM users WHERE id = ?', req.user.id);
   res.json(publicUser(u));
+});
+
+meRouter.post('/plan', async (req, res) => {
+  await redeemPaidCode(req.user.id, z.object({ code: z.string().max(100) }).parse(req.body ?? {}).code);
+  res.json({ ok: true });
 });
 
 meRouter.post('/capture-token', async (req, res) => {

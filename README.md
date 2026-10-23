@@ -88,8 +88,10 @@ One article end to end costs about **$0.045** (most of it is the questions and s
 | Variable | What it is |
 |---|---|
 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | The Turso database |
-| `GEMINI_API_KEY` | Google AI Studio API key |
-| `INVITE_CODE` | The code friends need to create an account |
+| `GEMINI_API_KEY_FREE` | Free-tier key (a Google project without billing). Free-plan accounts only ever use this |
+| `GEMINI_API_KEY` | Paid key (prepaid credit). Paid-plan accounts use it until a budget is hit, then fall back to the free key |
+| `INVITE_CODE` | Sign-up code for a free-plan account |
+| `INVITE_CODE_PAID` | Sign-up code for a paid-plan account; also upgrades an existing account from Settings |
 | `ARTICLES_PER_DAY` | New articles per person per day (default 1) |
 | `APP_DAILY_BUDGET_USD` | App-wide Gemini spend per day (default 0.50) |
 | `LIFETIME_BUDGET_USD` | All-time Gemini spend cap (default 4.80); raise it after a top-up |

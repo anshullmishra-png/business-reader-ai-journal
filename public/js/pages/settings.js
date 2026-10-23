@@ -51,6 +51,10 @@ export default async function render(el) {
       <div class="stack">
         <section class="card">
           <h2 class="card-title">${raw(icon('gauge'))}AI usage today</h2>
+          <div class="row plan-row">
+            <span class="pill ${s.plan === 'paid' ? 'pill-active' : 'pill-quoted'}">${s.plan === 'paid' ? 'Paid plan' : 'Free plan'}</span>
+            ${ai.key_now ? html`<span class="hint">Running on the ${ai.key_now === 'paid' ? 'paid key' : 'free tier'}</span>` : ''}
+          </div>
           ${ai.configured
             ? html`<div class="meter-row"><span class="stat-num">${ai.articles_today}</span><span class="hint">of ${ai.articles_per_day} article${ai.articles_per_day === 1 ? '' : 's'} today</span></div>
                <dl class="dl usage-dl">
@@ -58,13 +62,23 @@ export default async function render(el) {
                  <dt>Tokens in / out</dt><dd>${fmtTokens(ai.input_tokens_today)} / ${fmtTokens(ai.output_tokens_today)}</dd>
                  <dt>Your cost</dt><dd>${usd(ai.cost_today_usd)}</dd>
                </dl>
-               <div class="field-label usage-budget">Readout today: ${usd(ai.app_spend_today_usd)} of ${usd(ai.app_budget_usd)}</div>
-               <div class="meter"><span style="width:${budgetUsed}%"></span></div>
-               <div class="field-label usage-budget">Total spent: ${usd(ai.app_spend_total_usd)} of ${usd(ai.lifetime_budget_usd)}</div>
-               <div class="meter"><span style="width:${creditUsed}%"></span></div>
-               <p class="hint">Real token counts from Gemini, priced at Google's paid rates. Output includes the model's thinking. The daily figure resets at midnight UTC; the total stops AI work just before the prepaid credit runs out.</p>`
+               ${s.plan === 'paid' ? html`
+                 <div class="field-label usage-budget">Paid key today: ${usd(ai.app_spend_today_usd)} of ${usd(ai.app_budget_usd)}</div>
+                 <div class="meter"><span style="width:${budgetUsed}%"></span></div>
+                 <div class="field-label usage-budget">Paid key total: ${usd(ai.app_spend_total_usd)} of ${usd(ai.lifetime_budget_usd)}</div>
+                 <div class="meter"><span style="width:${creditUsed}%"></span></div>
+                 <p class="hint">Real token counts from Gemini, priced at Google's paid rates (output includes the model's thinking). When either budget is used up, you carry on on the free tier.</p>`
+               : html`<p class="hint">Real token counts from Gemini. The free tier costs nothing; on busy days Google may ask you to try again later.</p>`}`
             : html`<span class="pill pill-muted">Not configured</span>
                <p class="hint">The AI isn't set up on the server yet, so questions and scoring are paused.</p>`}
+          ${s.plan === 'free' ? html`
+            <form class="upgrade-form" id="upgrade">
+              <label class="field-label" for="paid-code">Have a paid code?</label>
+              <div class="row">
+                <input class="input" id="paid-code" name="code" autocomplete="off" maxlength="100">
+                <button class="btn btn-secondary" type="submit">Apply</button>
+              </div>
+            </form>` : ''}
         </section>
 
         <section class="card">
@@ -111,6 +125,17 @@ export default async function render(el) {
       toast('Saved');
     } catch (err) {
       toast(err.status === 400 ? 'Check the values: timer must be 20–300 seconds.' : err.message);
+    }
+  });
+
+  $('#upgrade', el)?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await api('/me/plan', { method: 'POST', body: { code: $('#paid-code', el).value } });
+      toast('Moved to the paid plan');
+      render(el);
+    } catch (err) {
+      toast(err.message);
     }
   });
 
