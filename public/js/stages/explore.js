@@ -4,6 +4,7 @@ import { html, raw, $, toast } from '../lib/dom.js';
 import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
 import { stageHeading } from '../lib/format.js';
+import { aiWait, endWait } from '../lib/wait.js';
 
 const googleUrl = (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
 
@@ -15,13 +16,9 @@ function relatedView(s) {
     </div>`;
   }
   if (s.related_status !== 'ready') {
-    return html`
-      <p class="status-line" style="margin-bottom:12px">${raw(icon('loader-circle', 'spin'))}Finding the threads worth pulling…</p>
-      ${[80, 60, 70].map((w) => html`<div class="card read-item">
-        <div class="skeleton" style="width:20px;height:20px;border-radius:6px"></div>
-        <div style="flex:1"><div class="skeleton skeleton-line" style="width:${w}%;height:18px"></div>
-          <div class="skeleton skeleton-line w-80"></div></div></div>`)}`;
+    return aiWait(`related:${s.id}`, 'Reading the article and picking the threads worth pulling', 'Usually 10–30 seconds');
   }
+  endWait(`related:${s.id}`);
   return html`${s.related.map((it) => html`
     <div class="card read-item ${it.done ? raw('is-done') : ''}">
       <label class="read-check">
@@ -47,10 +44,11 @@ function startBar(s) {
       <button class="btn btn-ghost btn-sm" type="button" data-action="retry-questions">${raw(icon('refresh-cw'))}Retry</button></div>`;
   }
   const ready = set?.gen_status === 'ready';
+  if (ready) endWait(`questions:${s.id}`);
   return html`
-    <p class="status-line">${ready
-      ? html`${raw(icon('circle-check'))}Your 10 questions are ready. ${raw('&nbsp;')}No going back once you start.`
-      : html`${raw(icon('loader-circle', 'spin'))}Preparing your 10 interview questions…`}</p>
+    ${ready
+      ? html`<p class="status-line">${raw(icon('circle-check'))}Your 10 questions are ready. ${raw('&nbsp;')}No going back once you start.</p>`
+      : aiWait(`questions:${s.id}`, 'Writing your 10 interview questions from the article and your brief', 'Usually 20–40 seconds. Explore while you wait.')}
     <button class="btn btn-primary" type="button" data-action="start" ${ready ? '' : raw('disabled')}>
       I'm ready. Start the interview ${raw(icon('arrow-right'))}</button>`;
 }

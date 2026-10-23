@@ -7,7 +7,7 @@ import { config } from '../config.js';
 import { db, now } from '../db/index.js';
 
 export class AiError extends Error {
-  /** @param {'not_configured'|'quota'|'busy'|'budget'|'credit'|'timeout'|'invalid_output'|'failed'} code */
+  /** @param {'not_configured'|'quota'|'busy'|'overloaded'|'budget'|'credit'|'timeout'|'invalid_output'|'failed'} code */
   constructor(code, message, detail) {
     super(message);
     this.code = code;
@@ -19,6 +19,7 @@ const FRIENDLY = {
   not_configured: "The AI isn't configured on the server yet.",
   quota: "You've reached today's AI limit. It resets at midnight UTC.",
   busy: "The free AI has hit Google's usage limit for now. Try again in a while.",
+  overloaded: "Google's AI is overloaded right now. Try again in a minute.",
   budget: "Readout has used up today's AI budget. It resets at midnight UTC.",
   credit: 'Readout has used its AI credit. AI features are paused until it is topped up.',
   timeout: 'The AI took too long to answer. Try again.',
@@ -131,6 +132,8 @@ function extractJson(text) {
 
 // Google answers 429 / RESOURCE_EXHAUSTED when a key's rate or quota limit is hit.
 const isRateLimited = (err) => err?.status === 429 || /RESOURCE_EXHAUSTED|\b429\b|quota/i.test(String(err?.message ?? ''));
+// 503 UNAVAILABLE: "This model is currently experiencing high demand."
+const isOverloaded = (err) => err?.status === 503 || /UNAVAILABLE|high demand|overloaded|\b503\b/i.test(String(err?.message ?? ''));
 
 async function attempt({ userId, task, model, keyTier, system, prompt, jsonSchema, timeoutMs }) {
   const t0 = performance.now();
@@ -159,7 +162,8 @@ async function attempt({ userId, task, model, keyTier, system, prompt, jsonSchem
       e = controller.signal.aborted ? new AiError('timeout', `timed out after ${timeoutMs}ms`)
         : err instanceof SyntaxError ? new AiError('invalid_output', err.message)
           : isRateLimited(err) ? new AiError('busy', redact(err?.message ?? err))
-            : new AiError('failed', redact(err?.message ?? err));
+            : isOverloaded(err) ? new AiError('overloaded', redact(err?.message ?? err))
+              : new AiError('failed', redact(err?.message ?? err));
     }
     await logCall(userId, task, model, keyTier, performance.now() - t0, false, `${e.code}: ${e.message}`, usage);
     throw e;
@@ -168,22 +172,15 @@ async function attempt({ userId, task, model, keyTier, system, prompt, jsonSchem
   }
 }
 
-/**
- * Runs one AI task for a user and returns zod-validated data.
- * One retry on transport errors, one "return valid JSON only" repair on schema errors.
- * @param {{ userId:number, task:string, tier:'light'|'strong', system:string, prompt:string, schema:import('zod').ZodType }} o
- */
-export async function runTask({ userId, task, tier = 'light', system, prompt, schema }) {
-  const keyTier = await keyFor(userId);
-  if (userId != null) {
-    const today = await callsToday(userId);
-    if (today.total >= config.aiDailyLimit) throw new AiError('quota', 'daily AI limit reached');
-  }
-  const model = config.gemini.models[tier] ?? tier;
-  const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' });
-  delete jsonSchema.$schema;
-  const base = { userId, task, model, keyTier, system, jsonSchema, timeoutMs: config.gemini.timeoutMs[tier] ?? 120_000 };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Google says high-demand spikes are short, so the retry waits a moment first.
+const RETRY_WAIT_MS = { overloaded: 4000, busy: 4000 };
 
+/**
+ * One model, with one retry on transport errors and one "return valid JSON only"
+ * repair on schema errors.
+ */
+async function runOnModel(base, prompt, schema) {
   let retriedTransport = false;
   let repaired = false;
   let currentPrompt = prompt;
@@ -192,8 +189,9 @@ export async function runTask({ userId, task, tier = 'light', system, prompt, sc
     try {
       raw = await attempt({ ...base, prompt: currentPrompt });
     } catch (err) {
-      if (['not_configured', 'quota', 'busy', 'budget', 'credit'].includes(err.code) || retriedTransport) throw err;
+      if (['not_configured', 'quota', 'budget', 'credit'].includes(err.code) || retriedTransport) throw err;
       retriedTransport = true;
+      await sleep(RETRY_WAIT_MS[err.code] ?? 0);
       continue;
     }
     const parsed = schema.safeParse(raw);
@@ -201,5 +199,33 @@ export async function runTask({ userId, task, tier = 'light', system, prompt, sc
     if (repaired) throw new AiError('invalid_output', 'response failed validation', parsed.error.issues.slice(0, 5));
     repaired = true;
     currentPrompt = `${prompt}\n\n---\nYour previous answer did not match the required JSON schema:\n${z.prettifyError(parsed.error)}\n\nReturn valid JSON only, matching the schema exactly.`;
+  }
+}
+
+/**
+ * Runs one AI task for a user and returns zod-validated data. If the model is
+ * overloaded, rate-limited or times out even after a retry, the task moves to
+ * the fallback model rather than failing.
+ * @param {{ userId:number, task:string, tier:'light'|'strong', system:string, prompt:string, schema:import('zod').ZodType }} o
+ */
+export async function runTask({ userId, task, tier = 'light', system, prompt, schema }) {
+  const keyTier = await keyFor(userId);
+  if (userId != null) {
+    const today = await callsToday(userId);
+    if (today.total >= config.aiDailyLimit) throw new AiError('quota', 'daily AI limit reached');
+  }
+  const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' });
+  delete jsonSchema.$schema;
+  const primary = config.gemini.models[tier] ?? tier;
+  const models = [...new Set([primary, config.gemini.fallbacks?.[tier]].filter(Boolean))];
+  const timeoutMs = config.gemini.timeoutMs[tier] ?? 120_000;
+
+  for (const [i, model] of models.entries()) {
+    try {
+      return await runOnModel({ userId, task, model, keyTier, system, jsonSchema, timeoutMs }, prompt, schema);
+    } catch (err) {
+      const switchable = ['overloaded', 'busy', 'timeout', 'failed'].includes(err.code);
+      if (!switchable || i === models.length - 1) throw err;
+    }
   }
 }

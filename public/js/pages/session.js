@@ -11,6 +11,7 @@ import { renderInterview } from '../stages/interview.js';
 import { renderVerdict } from '../stages/verdict.js';
 import { stageHeading } from '../lib/format.js';
 import { drawing } from '../lib/drawings.js';
+import { aiWait } from '../lib/wait.js';
 
 let meta = null; // { sectors, company_stages }
 const getMeta = async () => (meta ??= await api('/meta'));
@@ -22,14 +23,7 @@ const SELECT_FIELDS = { sector: { label: 'Sector', options: 'sectors' }, company
 
 function tagsView(s, m) {
   if (s.tags_status === 'pending') {
-    return html`
-      <p class="status-line">${raw(icon('loader-circle', 'spin'))}Tagging companies, sector and themes…</p>
-      <div class="tag-skeleton">
-        <div class="skeleton" style="width:90px;height:24px"></div>
-        <div class="skeleton" style="width:130px;height:24px"></div>
-        <div class="skeleton" style="width:70px;height:24px"></div>
-        <div class="skeleton" style="width:110px;height:24px"></div>
-      </div>`;
+    return aiWait(`tags:${s.id}`, 'Tagging companies, sector and themes', 'Usually under 10 seconds');
   }
   if (s.tags_status === 'failed' || !s.tags) {
     return html`
@@ -140,6 +134,13 @@ export default async function render(el, { id }) {
       stageEl.append(verdictEl, lockedEl);
       stageCleanup = renderVerdict(verdictEl, s, {
         setHeaderPill: () => setHeader({ title: s.title, pdf: reportUrl(), ghost: 'Verdict' }),
+        // The verdict arrives after the page drew: mark the last stage done and offer the report.
+        onEvaluated: (res) => {
+          if (s.overall_score != null) return;
+          s.overall_score = res.overall_score;
+          $('#tracker', el).innerHTML = trackerHtml('verdict', { times: { verdictDone: true } }).toString();
+          setHeader({ title: s.title, pdf: reportUrl(), ghost: 'Verdict' });
+        },
       });
       renderLockedComprehension(lockedEl, s);
       return;

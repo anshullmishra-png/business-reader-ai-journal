@@ -3,6 +3,7 @@
 import { html, raw, $, $$, toast } from '../lib/dom.js';
 import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
+import { aiWait } from '../lib/wait.js';
 
 const TYPE_LABELS = { mcq: 'Multiple choice', short: 'Short answer', structured: 'Structured', estimation: 'Estimation' };
 const PLACEHOLDERS = {
@@ -17,6 +18,13 @@ const draftKey = (qid) => `brj:answer:${qid}`;
 const readDraft = (qid) => { try { return localStorage.getItem(draftKey(qid)) ?? ''; } catch { return ''; } };
 const writeDraft = (qid, v) => { try { localStorage.setItem(draftKey(qid), v); } catch { /* ignore */ } };
 const dropDraft = (qid) => { try { localStorage.removeItem(draftKey(qid)); } catch { /* ignore */ } };
+
+// Focus mode: the header, tab bar and footer step aside while a question is live,
+// and the whole screen flips to the inverted palette for the last ten seconds.
+const setFocus = (on) => {
+  document.body.classList.toggle('focus-mode', on);
+  if (!on) document.body.classList.remove('urgent');
+};
 
 /**
  * @param {HTMLElement} container
@@ -74,6 +82,9 @@ export function renderInterview(container, { sessionId, setId, onProgress, onDon
       bar.parentElement.dataset.warn = String(left <= WARN_SECONDS * 1000);
     }
     if (label) label.textContent = `${Math.ceil(left / 1000)}s`;
+    const big = $('#countdown', container);
+    if (big) big.textContent = String(Math.ceil(left / 1000));
+    document.body.classList.toggle('urgent', left > 0 && left <= WARN_SECONDS * 1000);
     if (left <= 0) submit(true); // auto-submit whatever is typed or selected
   }
 
@@ -82,12 +93,14 @@ export function renderInterview(container, { sessionId, setId, onProgress, onDon
     selected = null;
     if (next.done) {
       q = null;
+      setFocus(false);
       container.innerHTML = html`<div class="card interview-done">
-        <p class="status-line">${raw(icon('loader-circle', 'spin'))}Interview complete. The interviewer is reading your answers…</p></div>`.toString();
+        ${aiWait(`done:${setId}`, 'Interview complete. The interviewer is reading your answers', 'Usually 20–60 seconds')}</div>`.toString();
       onDone?.();
       return;
     }
     q = next;
+    setFocus(true);
     // Convert the server deadline into this browser's clock.
     deadline = Date.now() + (Date.parse(q.deadline) - Date.parse(q.server_now));
     onProgress?.(q);
@@ -100,7 +113,10 @@ export function renderInterview(container, { sessionId, setId, onProgress, onDon
         <span class="timer-label" id="timer-label"></span>
       </div>
 
-      <div class="q-count">Question ${q.position} of ${q.total}</div>
+      <div class="q-top">
+        <div class="q-count">Question ${q.position} of ${q.total}</div>
+        <div class="countdown" id="countdown" aria-hidden="true"></div>
+      </div>
       <h2 class="q-prompt">${q.prompt}</h2>
 
       <div class="card q-card">
@@ -119,7 +135,7 @@ export function renderInterview(container, { sessionId, setId, onProgress, onDon
               <textarea id="answer" class="answer" rows="5" maxlength="3000"
                 placeholder="${PLACEHOLDERS[q.type]}">${draft}</textarea>`}
           <div class="q-foot">
-            <span class="hint">${q.type === 'mcq' ? 'Keys 1–4 to choose · ' : ''}Ctrl+Enter to submit · no going back</span>
+            <span class="hint keys">${q.type === 'mcq' ? html`<span class="kbd">1</span>–<span class="kbd">4</span> choose · ` : ''}<span class="kbd">Ctrl</span>+<span class="kbd">Enter</span> submit · no going back</span>
             <button class="btn btn-primary" type="button" id="submit-answer">Submit answer ${raw(icon('arrow-right'))}</button>
           </div>
         </div>
@@ -169,6 +185,7 @@ export function renderInterview(container, { sessionId, setId, onProgress, onDon
 
   return () => {
     stopped = true;
+    setFocus(false);
     clearInterval(clock);
     document.removeEventListener('keydown', onKey);
   };

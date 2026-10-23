@@ -691,3 +691,104 @@ body.signed-out .content::before { display: none; }
 .usage-budget { margin-top: 4px; }
 .plan-row { margin-bottom: 18px; }
 .upgrade-form { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--rule); display: grid; gap: 8px; }
+
+/* ======================================================================
+   Feel: flow, moments, writing, motion. Same palette, same square system.
+   ====================================================================== */
+
+/* ---------- Live AI waits ---------- */
+.ai-wait { display: grid; gap: 10px; }
+.ai-wait-line { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; color: var(--ink); }
+.ai-wait-label { flex: 1; }
+.ai-wait-clock { font-variant-numeric: tabular-nums; color: var(--ink-2); letter-spacing: 0.1em; }
+.ai-wait-bar { position: relative; height: 2px; background: var(--rule); overflow: hidden; }
+.ai-wait-bar span { position: absolute; inset: 0 auto 0 0; width: 30%; background: var(--ink); animation: wait-sweep 1.6s ease-in-out infinite; }
+.ai-wait-expect { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-2); }
+@keyframes wait-sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+
+/* ---------- Today: continue card, reading strip, welcome ---------- */
+.continue-card .label { color: var(--ink-2); }
+.continue-title {
+  font-family: var(--font-display); font-weight: 900; font-stretch: 125%; font-variation-settings: 'wdth' 125;
+  text-transform: uppercase; letter-spacing: -0.01em; font-size: clamp(22px, 2.6vw, 32px); line-height: 1.02; margin: 14px 0 0;
+}
+.continue-score { display: flex; align-items: baseline; margin-top: 18px; }
+.continue-score .score { font-size: 64px; line-height: 0.85; }
+.continue-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 28px; }
+
+.strip { margin: -24px 0 48px; }
+.strip-head { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.strip-days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 4px; }
+.strip-day { aspect-ratio: 1; max-height: 28px; border: 1px solid var(--rule); }
+.strip-day[data-read='true'] { background: var(--ink); border-color: var(--ink); }
+.strip-day[data-today='true'] { outline: 1px solid var(--ink); outline-offset: 2px; }
+@media (max-width: 900px) { .strip { margin: -12px 0 32px; } .strip-days { gap: 2px; } }
+
+.welcome { margin-bottom: 32px; }
+.welcome .tt-row { padding: 18px 0; }
+.welcome .tt-time { flex-basis: 4rem; }
+.welcome-foot { margin-top: 20px; }
+
+/* ---------- Interview focus mode ---------- */
+body.focus-mode .header, body.focus-mode .tabbar, body.focus-mode .app-foot,
+body.focus-mode .article-head { display: none !important; }
+body.focus-mode .content { padding-top: 40px; }
+body { transition: background-color 300ms ease-in-out, color 300ms ease-in-out; }
+.q-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
+.countdown {
+  font-family: var(--font-display); font-weight: 900; font-stretch: 125%; font-variation-settings: 'wdth' 125;
+  font-size: clamp(4rem, 9vw, 7.5rem); line-height: 0.8; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--ink);
+}
+body.urgent .countdown { animation: beat 1s steps(2, jump-none) infinite; }
+@keyframes beat { 50% { opacity: 0.55; } }
+.keys .kbd { margin: 0 2px; }
+
+/* ---------- Verdict reveal (first view only) ---------- */
+.reveal-in > * { animation: rise 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.reveal-in > :nth-child(2) { animation-delay: 80ms; }
+.reveal-in .pull-quote { animation: rise 520ms cubic-bezier(0.2, 0.7, 0.2, 1) 1150ms both; }
+.reveal-in > :nth-child(3) { animation-delay: 1500ms; }
+.reveal-in > :nth-child(4) { animation-delay: 1650ms; }
+.reveal-in > :nth-child(5) { animation-delay: 1800ms; }
+.reveal-in > :nth-child(n + 6) { animation-delay: 1950ms; }
+
+.next-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
+.next-step {
+  display: grid; gap: 8px; padding: 22px 24px; text-decoration: none; color: var(--ink);
+  border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); transition: background var(--ease);
+}
+.next-step:hover { background: var(--hover); }
+.next-step .icon { justify-self: end; width: 20px; height: 20px; transition: transform var(--ease); }
+.next-step:hover .icon { transform: translateX(4px); }
+.next-title {
+  font-family: var(--font-display); font-weight: 900; font-stretch: 125%; font-variation-settings: 'wdth' 125;
+  text-transform: uppercase; font-size: 18px; line-height: 1.05;
+}
+@media (max-width: 760px) { .next-grid { grid-template-columns: 1fr; } }
+
+/* ---------- Writing ---------- */
+.word-meter { position: relative; height: 3px; background: var(--rule); }
+.word-meter span { display: block; height: 100%; width: 0; background: var(--ink-2); transition: width 200ms ease-out; }
+.word-meter[data-state='ok'] span { background: var(--ink); }
+.word-meter[data-state='over'] span { background: var(--black); }
+.word-meter i { position: absolute; top: -4px; bottom: -4px; left: 50%; width: 1px; background: var(--ink); }
+.foot-status { display: grid; gap: 2px; }
+.saved-at { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-2); }
+@media (max-width: 900px) {
+  .editor-foot { position: sticky; bottom: var(--tabbar-h); z-index: 5; background: var(--ground); }
+  .editor-foot .keys { display: none; }
+}
+
+/* ---------- Motion & press states ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes drift { from { opacity: 0; transform: translateX(40%); } to { opacity: 1; transform: translateX(28%); } }
+.content.enter > * { animation: rise 460ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.content.enter > :nth-child(2) { animation-delay: 60ms; }
+.content.enter > :nth-child(3) { animation-delay: 120ms; }
+.content.enter > :nth-child(4) { animation-delay: 180ms; }
+.content.enter > :nth-child(n + 5) { animation-delay: 240ms; }
+.content.enter::before { animation: drift 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn-primary:active:not(:disabled) { background: var(--ink); color: var(--ground); opacity: 1; }
+.btn-secondary:active:not(:disabled), .btn-ghost:active:not(:disabled) { background: var(--ink); color: var(--ground); }
+.list-row:active, .next-step:active, .option:active:not(:disabled) { background: var(--rule); }

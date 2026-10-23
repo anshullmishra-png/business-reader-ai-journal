@@ -38,7 +38,8 @@
 }
 
 /* The one interior section a reader most needs to read flips the field. */
-.inverted {
+.inverted,
+body.urgent {
   --ground: var(--pink);
   --ink: var(--oxblood);
   --ink-2: rgba(112, 2, 15, 0.62);

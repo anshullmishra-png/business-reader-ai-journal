@@ -27,6 +27,12 @@ export const config = {
       light: env.GEMINI_MODEL_LIGHT || 'gemini-3.1-flash-lite',
       strong: env.GEMINI_MODEL_STRONG || 'gemini-3.6-flash',
     },
+    // When a model is overloaded (503) or rate-limited (429) after a retry, the
+    // task moves to this model instead of failing. Free-tier limits are per model.
+    fallbacks: {
+      light: env.GEMINI_MODEL_LIGHT_FALLBACK || 'gemini-3.5-flash-lite',
+      strong: env.GEMINI_MODEL_STRONG_FALLBACK || 'gemini-3.5-flash-lite',
+    },
     timeoutMs: { light: 90_000, strong: 180_000 },
   },
 

@@ -103,12 +103,24 @@ async function frameworkStrength(userId, sessionIds) {
   return { all, weakest };
 }
 
-/** Small numbers for the Today masthead. "This week" starts on Monday. */
+/** Small numbers for the Today page. "This week" starts on Monday. */
 export async function getSummary(user, tz = 0) {
-  const all = await db.all('SELECT created_at FROM sessions WHERE user_id = ? ORDER BY created_at', user.id);
+  const all = await db.all('SELECT id, title, stage, overall_score, created_at FROM sessions WHERE user_id = ? ORDER BY created_at', user.id);
   const today = localDay(new Date().toISOString(), tz);
   const dow = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7; // 0 = Monday
   const monday = new Date(Date.parse(`${today}T00:00:00Z`) - dow * DAY).toISOString().slice(0, 10);
+
+  // The last 30 days, oldest first: a plain record of which days had a session.
+  const read = new Set(all.map((s) => localDay(s.created_at, tz)));
+  const todayMs = Date.parse(`${today}T00:00:00Z`);
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date(todayMs - (29 - i) * DAY).toISOString().slice(0, 10);
+    return { date, read: read.has(date) };
+  });
+
+  // Today's most recent session, so Today can offer "Continue".
+  const current = [...all].reverse().find((s) => localDay(s.created_at, tz) === today) ?? null;
+
   return {
     total: all.length,
     week: all.filter((s) => localDay(s.created_at, tz) >= monday).length,
@@ -116,6 +128,8 @@ export async function getSummary(user, tz = 0) {
     streak: streak(all, tz),
     difficulty: user.difficulty_level,
     first_at: all[0]?.created_at ?? null,
+    days,
+    current: current && { id: current.id, title: current.title, stage: current.stage, overall_score: current.overall_score },
   };
 }
 

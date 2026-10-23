@@ -5,6 +5,7 @@ import { icon } from '../lib/icons.js';
 import { fmtScore } from '../lib/format.js';
 import { renderInterview } from './interview.js';
 import { stageHeading } from '../lib/format.js';
+import { aiWait } from '../lib/wait.js';
 
 const TYPE_LABELS = { mcq: 'Multiple choice', short: 'Short answer', structured: 'Structured', estimation: 'Estimation' };
 const LEVELS = [
@@ -83,13 +84,8 @@ function setStats(set) {
     <span>${set.timeouts ?? 0} timed out</span>${mins ? html`<span>${mins}</span>` : ''}</div>`;
 }
 
-function evaluating(label) {
-  return html`<div class="card">
-    <p class="status-line">${raw(icon('loader-circle', 'spin'))}${label}</p>
-    <div class="skeleton skeleton-line w-80"></div>
-    <div class="skeleton skeleton-line w-60"></div>
-    <div class="skeleton skeleton-line w-80"></div>
-  </div>`;
+function evaluating(label, key = `eval:${label}`, expect = 'Usually 20–60 seconds') {
+  return html`<div class="card">${aiWait(key, label, expect)}</div>`;
 }
 
 function evalFailed(setId) {
@@ -121,8 +117,7 @@ function extraRoundView(set, expanded) {
     return html`<div class="card"><p class="form-error" style="margin:0">Couldn't write this round. Pick a level to try again.</p></div>`;
   }
   if (set.gen_status === 'pending') {
-    return html`<div class="card"><p class="status-line">${raw(icon('loader-circle', 'spin'))}
-      Writing 10 ${levelLabel(set.level).toLowerCase()} questions…</p></div>`;
+    return html`<div class="card">${aiWait(`extra-gen:${set.id}`, `Writing 10 ${levelLabel(set.level).toLowerCase()} questions`, 'Usually 20–40 seconds')}</div>`;
   }
   if (set.status === 'not_started') {
     return html`<div class="card start-bar" style="position:static;margin-top:0">
@@ -156,7 +151,7 @@ function countUp(root) {
 }
 
 // ---------- Main ----------
-export function renderVerdict(container, session, { setHeaderPill }) {
+export function renderVerdict(container, session, { setHeaderPill, onEvaluated }) {
   container.dataset.session = String(session.id);
   let r = null;
   let timer = null;
@@ -181,10 +176,13 @@ export function renderVerdict(container, session, { setHeaderPill }) {
     if (main.status !== 'evaluated') {
       container.innerHTML = html`
         ${stageHeading('verdict')}
-        ${evaluating('The interviewer is reading your answers. This takes a minute or two…')}`.toString();
+        ${evaluating('The interviewer is reading your brief and all ten answers', `eval:${main.id}`)}`.toString();
       return;
     }
 
+    onEvaluated?.(r);
+    const firstReveal = !counted.has(String(session.id)) && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    container.classList.toggle('reveal-in', firstReveal);
     const busyExtra = r.extras.some((x) => x.status !== 'evaluated' && x.eval_status !== 'failed' && x.gen_status !== 'failed');
     container.innerHTML = html`
       ${stageHeading('verdict')}
@@ -227,6 +225,15 @@ export function renderVerdict(container, session, { setHeaderPill }) {
         ${r.extras.map((x) => extraRoundView(x, expanded.has(x.id)))}
         <div class="row extra-levels">
           ${LEVELS.map((l) => html`<button class="btn btn-ghost" type="button" data-level="${l.key}" ${busyExtra ? raw('disabled') : ''}>${l.label}</button>`)}
+        </div>
+      </section>
+
+      <section class="section next-steps">
+        <h2 class="section-heading">What next</h2>
+        <div class="next-grid">
+          <a class="next-step" href="/progress" data-link><span class="label">See the trend</span><span class="next-title">Your progress</span>${raw(icon('arrow-right'))}</a>
+          <a class="next-step" href="/glossary" data-link><span class="label">Lock in the terms</span><span class="next-title">Glossary quiz</span>${raw(icon('arrow-right'))}</a>
+          <a class="next-step" href="/" data-link><span class="label">Tomorrow</span><span class="next-title">Back to Today</span>${raw(icon('arrow-right'))}</a>
         </div>
       </section>`.toString();
 
@@ -278,7 +285,7 @@ export function renderVerdict(container, session, { setHeaderPill }) {
     }
   });
 
-  container.innerHTML = evaluating('Loading your verdict…').toString();
+  container.innerHTML = html`<div class="card"><p class="status-line">${raw(icon('loader-circle', 'spin'))}Loading your verdict…</p></div>`.toString();
   refresh();
   return () => { clearTimeout(timer); liveCleanup?.(); };
 }

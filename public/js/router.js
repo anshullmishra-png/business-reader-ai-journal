@@ -50,6 +50,10 @@ export async function render() {
 
   cleanup = await mod.default(el, match?.m.groups ?? {}, { onReady: render });
   hydrateIcons(el);
+  // Sections rise in one after another and the ghost word drifts in (skipped under reduced motion).
+  el.classList.remove('enter');
+  void el.offsetWidth;
+  el.classList.add('enter');
 }
 
 export function navigate(to, { replace = false } = {}) {

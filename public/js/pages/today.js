@@ -27,6 +27,54 @@ function stats(sum) {
     </div>`)}</div>`;
 }
 
+// The last 30 days as a row of squares: a plain record, no nudges.
+function readingStrip(days = []) {
+  if (!days.length) return '';
+  const n = days.filter((d) => d.read).length;
+  const label = (d) => new Date(`${d.date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  return html`<section class="strip" aria-label="Days with a session in the last 30 days">
+    <div class="strip-head"><span class="label">Last 30 days</span><span class="label">${n} day${n === 1 ? '' : 's'} read</span></div>
+    <ol class="strip-days">${days.map((d, i) => html`<li class="strip-day" data-read="${String(d.read)}" ${i === days.length - 1 ? raw('data-today="true"') : ''}
+      title="${label(d)}${d.read ? ' · read' : ''}"><span class="visually-hidden">${label(d)}: ${d.read ? 'read' : 'no session'}</span></li>`)}</ol>
+  </section>`;
+}
+
+// Where today's session stands, as a single "continue" action.
+const STAGE_STEP = { write: 2, explore: 3, interview: 4, verdict: 5 };
+const STAGE_ACTION = { write: 'Write your brief', explore: 'Explore, then start the interview', interview: 'Finish the interview', verdict: 'Review the verdict' };
+function continueCard(cur) {
+  const done = cur.stage === 'verdict' && cur.overall_score != null;
+  return html`<section class="card hard continue-card">
+    <span class="label">${done ? "Today's verdict" : `Today's article · Stage ${STAGE_STEP[cur.stage] ?? 2} of 5`}</span>
+    <h2 class="continue-title">${cur.title}</h2>
+    ${done ? html`<div class="continue-score"><span class="score">${Number(cur.overall_score).toFixed(1)}</span><span class="score-of">/10</span></div>` : ''}
+    <div class="continue-foot">
+      <a class="btn btn-primary" href="/session/${cur.id}" data-link>${STAGE_ACTION[cur.stage] ?? 'Continue'} ${raw(icon('arrow-right'))}</a>
+      <span class="hint">${done ? 'The next article unlocks tomorrow.' : 'One article a day keeps every interview sharp.'}</span>
+    </div>
+  </section>`;
+}
+
+// Shown until the first article, or until dismissed.
+const WELCOME_KEY = 'brj:welcome-dismissed';
+const welcomeDismissed = () => { try { return localStorage.getItem(WELCOME_KEY) === '1'; } catch { return false; } };
+function welcomeCard() {
+  const steps = [
+    ['01', 'Add an article', 'Paste a link or the text below, or send it from your browser with the extension.'],
+    ['02', 'Write your brief', '100–200 words in your own words. It locks when you submit.'],
+    ['03', 'Face the interviewer', 'Ten timed questions, then a blunt score out of ten and what to fix next.'],
+  ];
+  return html`<section class="card inverted welcome">
+    <div class="card-head">
+      <h2 class="card-title">Welcome to Readout</h2>
+      <button class="btn btn-ghost btn-sm" type="button" data-dismiss-welcome>Got it</button>
+    </div>
+    <div class="timetable">${steps.map(([n, t, d]) => html`<div class="tt-row">
+      <span class="tt-time">${n}</span><div class="tt-main"><div class="tt-title">${t}</div><p class="tt-sub">${d}</p></div></div>`)}</div>
+    <div class="welcome-foot"><a class="btn btn-secondary" href="/extension" data-link>Set up the browser extension</a></div>
+  </section>`;
+}
+
 export default async function render(el) {
   setHeader({ title: 'Today' });
   const [sum] = await Promise.all([
@@ -37,6 +85,8 @@ export default async function render(el) {
   // The server decides (daily article limit, or a paid budget with no free fallback).
   const block = appState.ai?.article_block ?? null;
   const doneForToday = block?.code === 'article_limit';
+  // First visit: the welcome is the page's one inverted section until it's dismissed.
+  const showWelcome = sum.total === 0 && !welcomeDismissed();
   const first = appState.user?.name?.split(/\s+/)[0];
   const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -47,11 +97,15 @@ export default async function render(el) {
       <p class="page-lede">Add today's article, write your brief, then face the interviewer.</p>
     </header>
 
+    ${showWelcome ? welcomeCard() : ''}
+
     ${stats(sum)}
+    ${readingStrip(sum.days)}
 
     <div class="bento">
       <div class="stack">
-        <section class="card hard add-card">
+        ${doneForToday && sum.current ? continueCard(sum.current) : ''}
+        <section class="card hard add-card" ${doneForToday && sum.current ? raw('hidden') : ''}>
           <div class="card-head">
             <h2 class="card-title">${raw(icon('plus'))}Start a session</h2>
             <div class="segmented" role="tablist" aria-label="How to add an article">
@@ -91,7 +145,7 @@ export default async function render(el) {
           <div id="add-status" aria-live="polite"></div>
         </section>
 
-        <section class="card inverted list-card">
+        <section class="card ${showWelcome ? '' : 'inverted'} list-card">
           <div class="card-head">
             <h2 class="card-title">${raw(icon('sun'))}Today's sessions</h2>
             <a class="link-quiet" href="/history" data-link>All history ${raw(icon('chevron-right'))}</a>
@@ -117,6 +171,12 @@ export default async function render(el) {
         </section>
       </div>
     </div>`.toString();
+
+  el.querySelector('[data-dismiss-welcome]')?.addEventListener('click', (e) => {
+    try { localStorage.setItem(WELCOME_KEY, '1'); } catch { /* ignore */ }
+    e.target.closest('.welcome').remove();
+    $('.list-card', el)?.classList.add('inverted');
+  });
 
   if (block) {
     for (const node of $$('.add-card form, .add-card .segmented', el)) node.hidden = true;

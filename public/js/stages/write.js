@@ -52,10 +52,14 @@ export function renderWrite(container, session, { onSubmitted }) {
       <label class="visually-hidden" for="editor">Your comprehension</label>
       <textarea id="editor" class="editor" spellcheck="true"
         placeholder="Start writing. What happened, and why should a founder care?"></textarea>
+      <div class="word-meter" id="word-meter" aria-hidden="true"><span id="word-fill"></span><i></i></div>
       <div class="editor-foot">
-        <span class="word-count" id="word-count" aria-live="polite"></span>
+        <div class="foot-status">
+          <span class="word-count" id="word-count" aria-live="polite"></span>
+          <span class="saved-at" id="saved-at"></span>
+        </div>
         <div class="row">
-          <span class="hint">Ctrl+Enter</span>
+          <span class="hint keys"><span class="kbd">Ctrl</span>+<span class="kbd">Enter</span></span>
           <button class="btn btn-primary" id="submit-write" type="button" disabled>${raw(icon('lock'))}Submit and lock</button>
         </div>
       </div>
@@ -67,6 +71,15 @@ export function renderWrite(container, session, { onSubmitted }) {
   const submitBtn = $('#submit-write', container);
   const elapsedEl = $('#elapsed', container);
   const elapsedTime = $('#elapsed-time', container);
+  const meter = $('#word-meter', container);
+  const fill = $('#word-fill', container);
+  const savedAt = $('#saved-at', container);
+  let lastSaved = null;
+  const showSaved = () => {
+    if (!lastSaved) return;
+    const s = Math.round((Date.now() - lastSaved) / 1000);
+    savedAt.textContent = `Saved on this device · ${s < 5 ? 'just now' : s < 60 ? `${s}s ago` : `${Math.floor(s / 60)} min ago`}`;
+  };
 
   editor.value = draft.text ?? (templateOn ? TEMPLATE_TEXT : '');
 
@@ -84,13 +97,21 @@ export function renderWrite(container, session, { onSubmitted }) {
         ? `${n} words · ${MIN_WORDS - n} more to go`
         : `${n} words`;
     counter.dataset.state = ok ? 'ok' : n > MAX_WORDS ? 'over' : 'under';
+    // The meter fills to the 200-word limit; the notch marks the 100-word minimum.
+    fill.style.width = `${Math.min(100, (n / MAX_WORDS) * 100)}%`;
+    meter.dataset.state = counter.dataset.state;
     submitBtn.disabled = !ok;
     autosize();
-    saveDraft(id, { text: editor.value, startedAt, template: toggle.checked });
+    if (editor.value !== (draft.text ?? '') || lastSaved) {
+      saveDraft(id, { text: editor.value, startedAt, template: toggle.checked });
+      lastSaved = Date.now();
+      showSaved();
+    }
   };
 
   const tick = () => {
     if (startedAt) elapsedTime.textContent = fmtElapsed(Date.now() - startedAt);
+    showSaved();
   };
   const timer = setInterval(tick, 1000);
   tick();
