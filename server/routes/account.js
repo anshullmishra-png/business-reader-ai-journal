@@ -3,7 +3,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { config } from '../config.js';
-import { callsToday } from '../ai/gemini.js';
+import { callsToday, appSpendToday } from '../ai/gemini.js';
+import { articlesToday } from '../services/sessions.js';
 import {
   signUp, signIn, signOut, readCookie, setSessionCookie, clearSessionCookie, requireUser,
   publicUser, updateSettings, regenerateCaptureToken,
@@ -41,10 +42,23 @@ authRouter.post('/signout', async (req, res) => {
 meRouter.use(requireUser);
 
 meRouter.get('/', async (req, res) => {
-  const today = await callsToday(req.user.id);
+  const [today, articles, appSpend] = await Promise.all([
+    callsToday(req.user.id), articlesToday(req.user.id, req.tz), appSpendToday(),
+  ]);
   res.json({
     ...publicUser(req.user),
-    ai: { configured: Boolean(config.gemini.apiKey), calls_today: today.total, daily_limit: config.aiDailyLimit },
+    ai: {
+      configured: Boolean(config.gemini.apiKey),
+      articles_today: articles,
+      articles_per_day: config.articlesPerDay,
+      calls_today: today.total,
+      daily_limit: config.aiDailyLimit,
+      input_tokens_today: today.input_tokens,
+      output_tokens_today: today.output_tokens,
+      cost_today_usd: today.cost_usd,
+      app_spend_today_usd: appSpend,
+      app_budget_usd: config.appDailyBudgetUsd,
+    },
   });
 });
 
@@ -79,6 +93,6 @@ meRouter.get('/export', async (req, res) => {
     db.all('SELECT period_start, period_end, content, created_at FROM weekly_reviews WHERE user_id = ?', id),
   ]);
   const stamp = new Date().toISOString().slice(0, 10);
-  res.setHeader('Content-Disposition', `attachment; filename="business-reads-journal-${stamp}.json"`);
+  res.setHeader('Content-Disposition', `attachment; filename="readout-${stamp}.json"`);
   res.json({ exported_at: new Date().toISOString(), user: { name: req.user.name, email: req.user.email }, sessions, question_sets: sets, questions, glossary, weekly_reviews: reviews });
 });

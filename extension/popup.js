@@ -35,14 +35,14 @@ async function send(article, { server, token }) {
   try {
     res = await fetch(`${server}/api/capture`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Capture-Token': token },
+      headers: { 'Content-Type': 'application/json', 'X-Capture-Token': token, 'X-TZ-Offset': String(new Date().getTimezoneOffset()) },
       body: JSON.stringify(article),
     });
   } catch {
-    throw new Error("Couldn't reach the journal. Check your internet connection, then try again.");
+    throw new Error("Couldn't reach Readout. Check your internet connection, then try again.");
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `The journal returned an error (${res.status}).`);
+  if (!res.ok) throw new Error(data.error || `Readout returned an error (${res.status}).`);
   return data;
 }
 
@@ -50,7 +50,7 @@ async function main() {
   const conf = await settings();
   if (!conf.token) {
     show(
-      el('p', { class: 'muted' }, 'Paste your capture token first. Find it in the journal: Settings → Browser extension.'),
+      el('p', { class: 'muted' }, 'Paste your capture token first. Find it in Readout: Account → Settings → Browser extension.'),
       el('button', { class: 'btn', onclick: openOptions }, 'Open extension settings'),
     );
     return;
@@ -71,7 +71,7 @@ async function main() {
   }
 
   const count = words(article.text || '');
-  const sendBtn = el('button', { class: 'btn' }, 'Send to Journal');
+  const sendBtn = el('button', { class: 'btn' }, 'Send to Readout');
   show(
     el('p', { class: 'title' }, article.title || 'Untitled page'),
     el('div', { class: 'meta' }, `${count.toLocaleString()} words found`),

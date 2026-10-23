@@ -185,4 +185,15 @@ CREATE TABLE jobs (
 CREATE INDEX idx_jobs_user_status ON jobs (user_id, status);
 `,
   },
+  {
+    // Real token usage and cost of every Gemini call.
+    name: '002_ai_usage',
+    sql: `
+ALTER TABLE ai_calls ADD COLUMN input_tokens INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE ai_calls ADD COLUMN output_tokens INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE ai_calls ADD COLUMN thinking_tokens INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE ai_calls ADD COLUMN cost_usd REAL NOT NULL DEFAULT 0;
+CREATE INDEX idx_ai_calls_created ON ai_calls (created_at);
+`,
+  },
 ];

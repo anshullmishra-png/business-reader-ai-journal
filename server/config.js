@@ -27,8 +27,15 @@ export const config = {
 
   // Sign-up needs this code, so strangers can't use the Gemini quota.
   inviteCode: env.INVITE_CODE || '',
-  // AI calls each person may make per day.
-  aiDailyLimit: Number(env.AI_DAILY_LIMIT) || 120,
+  // New articles each person may start per day (each one runs ~5 AI calls).
+  articlesPerDay: Number(env.ARTICLES_PER_DAY) || 1,
+  // Safety ceiling on AI calls per person per day: one article, its retries,
+  // dictionary lookups, an extra round and the weekly review fit well inside it.
+  aiDailyLimit: Number(env.AI_DAILY_LIMIT) || 30,
+  // What the whole app may spend on Gemini per UTC day, in US dollars. At about
+  // $0.045 an article, $0.50 covers ~11 articles a day (you plus ten testers),
+  // so $5 of prepaid credit lasts at least ten days of full use.
+  appDailyBudgetUsd: Number(env.APP_DAILY_BUDGET_USD) || 0.5,
 
   isVercel: Boolean(env.VERCEL),
   port: Number(env.PORT) || 4317,

@@ -75,7 +75,7 @@ sessionsRouter.post('/', async (req, res) => {
   if (article.word_count < MIN_ARTICLE_WORDS) {
     throw httpError(422,
       `Only ${article.word_count} words came through, so this is probably a paywall or a teaser. ` +
-      'Use the Send to Journal extension from the article tab, or paste the text.',
+      'Use the Send to Readout extension from the article tab, or paste the text.',
       { code: 'too_short', title: article.title });
   }
   res.status(201).json(await createSession(req.user.id, {

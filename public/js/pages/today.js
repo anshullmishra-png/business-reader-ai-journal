@@ -3,7 +3,7 @@ import { api } from '../lib/api.js';
 import { icon } from '../lib/icons.js';
 import { setHeader, STAGES } from '../shell.js';
 import { navigate } from '../router.js';
-import { appState } from '../app.js';
+import { appState, loadMe } from '../app.js';
 import { sessionCard } from '../lib/sessionCard.js';
 import { drawing } from '../lib/drawings.js';
 
@@ -29,7 +29,14 @@ function stats(sum) {
 
 export default async function render(el) {
   setHeader({ title: 'Today' });
-  const sum = await api('/summary').catch(() => ({ total: 0, week: 0, today: 0, streak: 0, difficulty: 3 }));
+  const [sum] = await Promise.all([
+    api('/summary').catch(() => ({ total: 0, week: 0, today: 0, streak: 0, difficulty: 3 })),
+    loadMe().catch(() => null),
+  ]);
+  // One new article a day: once it's started, the add form gives way to a note.
+  const ai = appState.ai ?? {};
+  const doneForToday = ai.articles_today >= ai.articles_per_day;
+  const budgetSpent = ai.app_spend_today_usd + 0.06 > ai.app_budget_usd;
   const first = appState.user?.name?.split(/\s+/)[0];
   const date = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -105,11 +112,19 @@ export default async function render(el) {
         </section>
         <section class="card card-soft">
           <h2 class="card-title">${raw(icon('puzzle'))}Reading a paywalled story?</h2>
-          <p>The <strong>Send to Journal</strong> extension sends the full text you can see while logged in, straight from the article tab.</p>
+          <p>The <strong>Send to Readout</strong> extension sends the full text you can see while logged in, straight from the article tab.</p>
           <div><a class="btn btn-secondary" href="/extension" data-link>Install the extension</a></div>
         </section>
       </div>
     </div>`.toString();
+
+  if (doneForToday || budgetSpent) {
+    for (const node of $$('.add-card form, .add-card .segmented', el)) node.hidden = true;
+    $('.add-card .card-title', el).lastChild.textContent = doneForToday ? "Today's article is in" : 'Paused for today';
+    $('#add-status', el).innerHTML = html`<p class="land-pitch">${doneForToday
+      ? 'One article a day keeps every interview sharp. Finish today’s session; the next article unlocks tomorrow.'
+      : 'Readout has used today’s AI budget. New articles unlock again after midnight UTC.'}</p>`.toString();
+  }
 
   // ---- Tabs ----
   const setMode = (mode) => {
@@ -182,6 +197,6 @@ export default async function render(el) {
   const onFocus = () => loadList();
   window.addEventListener('focus', onFocus);
 
-  $('#add-url', el).focus();
+  if (!doneForToday && !budgetSpent) $('#add-url', el).focus();
   return () => { clearInterval(timer); window.removeEventListener('focus', onFocus); };
 }

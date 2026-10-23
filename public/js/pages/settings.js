@@ -4,18 +4,21 @@ import { icon } from '../lib/icons.js';
 import { setHeader, setProfile } from '../shell.js';
 import { appState, loadMe } from '../app.js';
 
+const usd = (n) => `$${(n ?? 0).toFixed(n >= 1 ? 2 : 3)}`;
+const fmtTokens = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n ?? 0));
+
 export default async function render(el) {
   setHeader({ title: 'Settings' });
   await loadMe();
   const s = appState.user;
   const ai = appState.ai;
-  const used = Math.min(100, Math.round((ai.calls_today / Math.max(1, ai.daily_limit)) * 100));
+  const budgetUsed = Math.min(100, Math.round((ai.app_spend_today_usd / Math.max(0.01, ai.app_budget_usd)) * 100));
 
   el.innerHTML = html`
     <header class="page-head">
       <div class="label">Account</div>
       <h1 class="page-title">Settings</h1>
-      <p class="page-lede">Your journal is private to your account.</p>
+      <p class="page-lede">Your Readout is private to your account.</p>
     </header>
 
     <div class="bento">
@@ -47,9 +50,15 @@ export default async function render(el) {
         <section class="card">
           <h2 class="card-title">${raw(icon('gauge'))}AI usage today</h2>
           ${ai.configured
-            ? html`<div class="meter-row"><span class="stat-num">${ai.calls_today}</span><span class="hint">of ${ai.daily_limit} AI calls</span></div>
-               <div class="meter"><span style="width:${used}%"></span></div>
-               <p class="hint">Each article uses about 6–8 calls. The count resets at midnight UTC.</p>`
+            ? html`<div class="meter-row"><span class="stat-num">${ai.articles_today}</span><span class="hint">of ${ai.articles_per_day} article${ai.articles_per_day === 1 ? '' : 's'} today</span></div>
+               <dl class="dl usage-dl">
+                 <dt>Your AI calls</dt><dd>${ai.calls_today}</dd>
+                 <dt>Tokens in / out</dt><dd>${fmtTokens(ai.input_tokens_today)} / ${fmtTokens(ai.output_tokens_today)}</dd>
+                 <dt>Your cost</dt><dd>${usd(ai.cost_today_usd)}</dd>
+               </dl>
+               <div class="field-label usage-budget">Readout today: ${usd(ai.app_spend_today_usd)} of ${usd(ai.app_budget_usd)}</div>
+               <div class="meter"><span style="width:${budgetUsed}%"></span></div>
+               <p class="hint">Real token counts from Gemini, priced at Google's paid rates. Output includes the model's thinking. Resets at midnight UTC.</p>`
             : html`<span class="pill pill-muted">Not configured</span>
                <p class="hint">The AI isn't set up on the server yet, so questions and scoring are paused.</p>`}
         </section>
@@ -57,7 +66,7 @@ export default async function render(el) {
         <section class="card">
           <h2 class="card-title">${raw(icon('download'))}Your data</h2>
           <p class="hint">Download everything you've written (summaries, answers, scores, glossary and reviews) as one JSON file.</p>
-          <div><a class="btn btn-secondary" href="/api/me/export" download>${raw(icon('download'))}Export my journal</a></div>
+          <div><a class="btn btn-secondary" href="/api/me/export" download>${raw(icon('download'))}Export my data</a></div>
         </section>
       </div>
 

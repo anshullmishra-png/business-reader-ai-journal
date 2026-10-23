@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Send to Journal",
-  "short_name": "Send to Journal",
-  "version": "2.0.0",
-  "description": "Send the article you're reading to your Business Reads Journal.",
+  "name": "Send to Readout",
+  "short_name": "Send to Readout",
+  "version": "2.1.0",
+  "description": "Send the article you're reading to Readout.",
   "action": {
-    "default_title": "Send to Journal",
+    "default_title": "Send to Readout",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

@@ -15,7 +15,7 @@ export const STAGES = [
 // Called by each page on render. `pdf` shows the header download button.
 // `ghost` is the oversized tone-on-tone word behind the page (defaults to the title's first word).
 export function setHeader({ title = '', pdf = null, ghost } = {}) {
-  document.title = title ? `${title} · Business Reads Journal` : 'Business Reads Journal';
+  document.title = title ? `${title} · Readout` : 'Readout';
   $('#content').dataset.ghost = (ghost ?? title.split(/\s+/)[0] ?? '').slice(0, 12);
   const pdfBtn = $('#pdf-btn');
   pdfBtn.hidden = !pdf;

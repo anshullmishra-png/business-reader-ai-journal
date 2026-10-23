@@ -1,4 +1,4 @@
-// Zips /extension into /public/downloads/send-to-journal.zip so readers can
+// Zips /extension into /public/downloads/send-to-readout.zip so readers can
 // download it from the Install page. Run `npm run pack-extension` after changing the extension.
 import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname, relative, sep } from 'node:path';
@@ -7,7 +7,7 @@ import { crc32, deflateRawSync } from 'node:zlib';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = join(root, 'extension');
-const out = join(root, 'public', 'downloads', 'send-to-journal.zip');
+const out = join(root, 'public', 'downloads', 'send-to-readout.zip');
 
 const files = [];
 (function walk(dir) {
@@ -18,12 +18,12 @@ const files = [];
   }
 })(src);
 
-// Minimal ZIP writer (deflate, no extras). Everything sits inside a send-to-journal/ folder.
+// Minimal ZIP writer (deflate, no extras). Everything sits inside a send-to-readout/ folder.
 const local = [];
 const central = [];
 let offset = 0;
 for (const file of files) {
-  const name = Buffer.from(`send-to-journal/${relative(src, file).split(sep).join('/')}`);
+  const name = Buffer.from(`send-to-readout/${relative(src, file).split(sep).join('/')}`);
   const data = readFileSync(file);
   const packed = deflateRawSync(data, { level: 9 });
   const crc = crc32(data);

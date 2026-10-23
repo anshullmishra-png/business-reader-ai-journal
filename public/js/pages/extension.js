@@ -4,7 +4,7 @@ import { setHeader } from '../shell.js';
 import { appState } from '../app.js';
 
 // Must match DEFAULT_SERVER in extension/config.js.
-const DEFAULT_SERVER = 'https://business-reads-journal.vercel.app';
+const DEFAULT_SERVER = 'https://readout-app.vercel.app';
 
 export default async function render(el) {
   setHeader({ title: 'Install the extension', ghost: 'Install' });
@@ -15,8 +15,8 @@ export default async function render(el) {
   el.innerHTML = html`
     <header class="page-head">
       <div class="label">Browser extension</div>
-      <h1 class="page-title">Install "Send to Journal"</h1>
-      <p class="page-lede">It copies the article you're reading, exactly as you see it while logged in, into your journal.
+      <h1 class="page-title">Install "Send to Readout"</h1>
+      <p class="page-lede">It copies the article you're reading, exactly as you see it while logged in, into Readout.
         It never logs in anywhere or reads your passwords, and it only acts when you click it. Works in Chrome and Edge on a computer.</p>
     </header>
 
@@ -25,7 +25,7 @@ export default async function render(el) {
         <li>
           <div class="step-title">Download and unzip</div>
           <p class="hint">Unzip it somewhere you'll keep it, like Documents. Chrome loads it from that folder.</p>
-          <div><a class="btn btn-primary" href="/downloads/send-to-journal.zip" download>${raw(icon('download'))}Download extension (.zip)</a></div>
+          <div><a class="btn btn-primary" href="/downloads/send-to-readout.zip" download>${raw(icon('download'))}Download extension (.zip)</a></div>
         </li>
         <li>
           <div class="step-title">Open the extensions page</div>
@@ -33,7 +33,7 @@ export default async function render(el) {
         </li>
         <li>
           <div class="step-title">Click "Load unpacked"</div>
-          <p class="hint">Choose the unzipped <code>send-to-journal</code> folder. Then pin it from the puzzle-piece menu next to the address bar.</p>
+          <p class="hint">Choose the unzipped <code>send-to-readout</code> folder. Then pin it from the puzzle-piece menu next to the address bar.</p>
         </li>
         <li>
           <div class="step-title">Paste your capture token</div>
@@ -46,7 +46,7 @@ export default async function render(el) {
         </li>
         <li>
           <div class="step-title">Send your first article</div>
-          <p class="hint">Open an article (log in first for paid stories), click the icon, then <strong>Send to Journal</strong>.</p>
+          <p class="hint">Open an article (log in first for paid stories), click the icon, then <strong>Send to Readout</strong>.</p>
         </li>
       </ol>
 

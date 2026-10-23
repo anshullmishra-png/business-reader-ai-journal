@@ -5,6 +5,8 @@ import { countWords } from './extract.js';
 import { enqueue } from '../jobs/runner.js';
 import { ensureRelated } from './related.js';
 import { httpError } from './auth.js';
+import { config } from '../config.js';
+import { appSpendToday } from '../ai/gemini.js';
 
 export { httpError };
 export const MIN_ARTICLE_WORDS = 300;
@@ -21,6 +23,28 @@ export function localMidnight(tzOffset = 0, daysAgo = 0) {
  * reading in the background. The same URL captured twice in a day returns the
  * existing session.
  */
+// An article runs about 5 AI calls (~$0.045). Leave room for one before starting it.
+const ARTICLE_COST_USD = 0.06;
+
+/** New articles this user has started since their local midnight. */
+export async function articlesToday(userId, tzOffset = 0) {
+  const r = await db.get('SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND created_at >= ?', userId, localMidnight(tzOffset));
+  return r.n;
+}
+
+// One new article per person per day, and none once the app's daily AI budget is nearly spent.
+async function checkArticleAllowance(userId, tzOffset) {
+  const n = await articlesToday(userId, tzOffset);
+  if (n >= config.articlesPerDay) {
+    throw httpError(429, config.articlesPerDay === 1
+      ? "You've already started today's article. The next one unlocks tomorrow."
+      : `You've started ${n} articles today, the daily limit. More unlock tomorrow.`, { code: 'article_limit' });
+  }
+  if (await appSpendToday() + ARTICLE_COST_USD > config.appDailyBudgetUsd) {
+    throw httpError(429, "Readout has used up today's AI budget, so new articles are paused until midnight UTC.", { code: 'budget' });
+  }
+}
+
 export async function createSession(userId, { url = null, title, author = null, published_at = null, text }, { tzOffset = 0 } = {}) {
   const clean = String(text).replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   if (url) {
@@ -29,6 +53,7 @@ export async function createSession(userId, { url = null, title, author = null, 
       userId, url, localMidnight(tzOffset));
     if (existing) return { id: existing.id, existing: true };
   }
+  await checkArticleAllowance(userId, tzOffset);
   const t = now();
   const { lastInsertRowid: id } = await db.run(`
     INSERT INTO sessions (user_id, url, source, title, author, published_at, article_text, word_count, stage, created_at, updated_at)

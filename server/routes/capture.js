@@ -1,4 +1,4 @@
-// POST /api/capture: called by the "Send to Journal" browser extension.
+// POST /api/capture: called by the "Send to Readout" browser extension.
 // The capture token (X-Capture-Token) identifies the user. CORS answers only
 // browser-extension origins, and after a user's first valid capture only that
 // one extension install (its origin is pinned until the token is regenerated).
@@ -42,7 +42,7 @@ captureRouter.post('/', async (req, res) => {
     throw httpError(401, 'Missing or wrong capture token. Copy it from the journal: Settings → Browser extension.');
   }
   const origin = req.headers.origin;
-  if (!isExtensionOrigin(origin)) throw httpError(403, 'Captures are only accepted from the Send to Journal extension.');
+  if (!isExtensionOrigin(origin)) throw httpError(403, 'Captures are only accepted from the Send to Readout extension.');
   if (user.extension_origin && user.extension_origin !== origin) {
     throw httpError(403, 'Your journal is paired with a different extension install. Generate a new token in Settings to re-pair.');
   }

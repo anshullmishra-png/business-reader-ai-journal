@@ -30,7 +30,7 @@ server.use((req, res, next) => {
 });
 
 server.listen(config.port, '127.0.0.1', () => {
-  console.log(`\n  Business Reads Journal (development) at http://localhost:${config.port}`);
+  console.log(`\n  Readout (development) at http://localhost:${config.port}`);
   console.log(`  Database: ${config.dbUrl.startsWith('file:') ? config.dbUrl.slice(5) : 'Turso'}`);
   console.log(`  AI: ${config.gemini.apiKey ? 'Gemini' : 'not configured (set GEMINI_API_KEY in .env.local)'}\n`);
 });

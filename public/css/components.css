@@ -684,3 +684,8 @@ body.signed-out .content::before { display: none; }
 .g-list:not(:empty) { border: 1px solid var(--pink); }
 .g-list .card.g-item { border-width: 0 0 1px; }
 .g-list .card.g-item:last-child { border-bottom: none; }
+
+/* Settings: usage figures */
+.usage-dl { margin: 18px 0; grid-template-columns: 1fr auto; font-family: var(--font-mono); font-size: 13px; }
+.usage-dl dd { text-align: right; }
+.usage-budget { margin-top: 4px; }

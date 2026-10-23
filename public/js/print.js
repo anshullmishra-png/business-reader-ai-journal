@@ -101,7 +101,7 @@ async function sessionReport(id) {
       <table class="t"><thead><tr><th>Level</th><th>Verdict</th><th class="num">Score</th></tr></thead>
       <tbody>${extras.map((x) => html`<tr><td>${LEVEL_LABELS[x.level]}</td><td>${x.verdict?.summary ?? ''}</td><td class="num">${sc(x.score)}</td></tr>`)}</tbody></table>` : ''}
 
-    <p class="r-footer-note">Generated ${today()} by Business Reads Journal. Scores are from an AI interviewer calibrated so 5/10 is an acceptable first-round answer.</p>`;
+    <p class="r-footer-note">Generated ${today()} by Readout. Scores are from an AI interviewer calibrated so 5/10 is an acceptable first-round answer.</p>`;
 }
 
 // ---------- Weekly review report ----------
@@ -111,7 +111,7 @@ async function reviewReport(id) {
   if (!r) return html`<p class="r-prose">Review not found.</p>`;
   const c = r.content;
   const s = c.stats ?? {};
-  document.title = `Weekly review ${fmtDate(r.period_start)} · Business Reads Journal`;
+  document.title = `Weekly review ${fmtDate(r.period_start)} · Readout`;
   const points = (list) => html`<ul class="list">${list.map((p) => html`<li><strong>${p.point}</strong><br><span class="r-muted">${p.evidence}</span></li>`)}</ul>`;
   return html`
     <div class="r-kicker">Weekly review${settings.name ? ` · ${settings.name}` : ''}</div>
@@ -135,7 +135,7 @@ async function reviewReport(id) {
     <h2 class="r-h2">Patterns</h2><ul class="list r-prose">${c.patterns.map((p) => html`<li>${p}</li>`)}</ul>
     <div style="break-inside:avoid"><h2 class="r-h2">Goals for next week</h2><ol class="list r-prose">${c.goals.map((g) => html`<li>${g}</li>`)}</ol></div>
     <div class="block" style="margin-top:14pt"><p class="r-prose"><strong>Verdict.</strong> ${c.verdict}</p></div>
-    <p class="r-footer-note">Generated ${today()} by Business Reads Journal.</p>`;
+    <p class="r-footer-note">Generated ${today()} by Readout.</p>`;
 }
 
 // ---------- Portfolio report ----------
@@ -143,7 +143,7 @@ async function portfolioReport() {
   const [p, sessions, { reviews }, settings] = await Promise.all([
     api('/progress?window=all'), api('/sessions'), api('/reviews'), api('/me'),
   ]);
-  document.title = 'Portfolio report · Business Reads Journal';
+  document.title = 'Portfolio report · Readout';
   const h = p.headline;
   const scored = sessions.filter((s) => s.overall_score != null).sort((a, b) => a.created_at.localeCompare(b.created_at));
   if (!scored.length) return html`<p class="r-prose">The portfolio report needs at least one scored session.</p>`;
@@ -232,7 +232,7 @@ async function portfolioReport() {
       ${reviews.map((rv) => html`<div class="block"><div class="r-kicker">${fmtDate(rv.period_start)} – ${fmtDate(rv.period_end)}</div>
         <p class="r-prose"><strong>${rv.content.headline}</strong> ${rv.content.verdict}</p></div>`)}` : ''}
 
-    <p class="r-footer-note">Generated ${today()} by Business Reads Journal, an app that uses AI as a demanding interview tutor.
+    <p class="r-footer-note">Generated ${today()} by Readout, an app that uses AI as a demanding interview tutor.
       Article text is never included in reports.</p>`;
 }
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Send to Journal: settings</title>
+  <title>Send to Readout: settings</title>
   <link rel="stylesheet" href="popup.css">
   <style>
     body { width: auto; max-width: 440px; padding: 20px; }
@@ -16,16 +16,16 @@
 <body>
   <header class="top">
     <img src="icons/icon-32.png" width="24" height="24" alt="">
-    <span class="brand">Send to Journal: settings</span>
+    <span class="brand">Send to Readout: settings</span>
   </header>
   <form id="form">
     <label for="token">Capture token</label>
     <input id="token" autocomplete="off" spellcheck="false" required>
-    <p class="hint">Copy it from the journal: Account → Settings → Browser extension.</p>
+    <p class="hint">Copy it from Readout: Account → Settings → Browser extension.</p>
 
     <label for="server">Journal address</label>
-    <input id="server" spellcheck="false" placeholder="https://business-reads-journal.vercel.app">
-    <p class="hint">The web address of your journal. Leave it as is unless you were given a different one.</p>
+    <input id="server" spellcheck="false" placeholder="https://readout-app.vercel.app">
+    <p class="hint">The web address of Readout. Leave it as is unless you were given a different one.</p>
 
     <button class="btn" type="submit">Save</button>
     <p class="ok" id="saved" hidden style="margin-top:12px">Saved ✓</p>

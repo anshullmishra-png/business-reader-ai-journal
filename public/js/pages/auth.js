@@ -27,14 +27,14 @@ export default async function render(el) {
   el.innerHTML = html`
     <div class="landing">
       <section class="land-bar">
-        <span class="brand-name">Business Reads</span>
-        <span class="meta-mid">Daily reading · Interview practice</span>
+        <span class="brand-name">Readout</span>
+        <span class="meta-mid">Read it · Brief it · Defend it</span>
         <a class="btn btn-primary" href="${signup ? `/signin${qs}` : `/signup${qs}`}" data-link>${signup ? 'Sign in' : 'Create account'}</a>
       </section>
 
       <section class="land-hero">
-        <div class="land-ghost" aria-hidden="true">Reads</div>
-        <h1 class="auth-word"><span>Business</span><span>Reads</span></h1>
+        <div class="land-ghost" aria-hidden="true">Readout</div>
+        <h1 class="auth-word" aria-label="Readout"><span>Read</span><span>out</span></h1>
         <dl class="land-meta">
           <div><dt>Format</dt><dd>One article a day</dd></div>
           <div><dt>Practice</dt><dd>Chief of Staff interviews</dd></div>
@@ -54,7 +54,7 @@ export default async function render(el) {
 
         <form class="auth-card" id="auth-form" novalidate>
           <span class="label">${signup ? 'New account' : 'Welcome back'}</span>
-          <h2 class="auth-title">${signup ? 'Create your journal' : 'Sign in'}</h2>
+          <h2 class="auth-title">${signup ? 'Create your account' : 'Sign in'}</h2>
           ${signup ? html`<div class="field">
             <label class="field-label" for="name">Your name</label>
             <input class="input" id="name" name="name" autocomplete="name" maxlength="60" required>
