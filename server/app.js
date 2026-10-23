@@ -2,7 +2,7 @@
 // server/local.js adds static files and listens on a port.
 import express from 'express';
 import { ZodError } from 'zod';
-import { dbReady } from './db/index.js';
+import { ensureDb } from './db/index.js';
 import { config } from './config.js';
 import { requireUser } from './services/auth.js';
 import { authRouter, meRouter } from './routes/account.js';
@@ -32,7 +32,18 @@ app.use((req, res, next) => {
 });
 
 // Migrations run once per cold start; every request waits for them.
-app.use(async (_req, _res, next) => { await dbReady; next(); });
+app.use(async (_req, _res, next) => {
+  try {
+    await ensureDb();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// A stray rejected promise (say, a background job losing its connection) must not
+// take the whole server down with the requests it is serving.
+process.on('unhandledRejection', (err) => console.error('[unhandled]', err?.message ?? err));
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, guest: config.allowGuest }));

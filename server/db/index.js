@@ -99,9 +99,28 @@ async function pgliteDriver(dir) {
 
 const driverReady = config.databaseUrl ? neonDriver(config.databaseUrl) : pgliteDriver(config.localDbDir);
 
+// ---------- Transient connection failures ----------
+// Neon pauses idle databases and a fresh Vercel instance has no warm connection, so
+// the first connect can time out or be dropped. Getting a connection is always safe
+// to retry; a statement that may have run is only retried if it just reads.
+const CONNECT_FAILURE = /timeout exceeded when trying to connect|connection timeout|Connection terminated|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|Client has encountered a connection error/i;
+const isReadOnly = (sql) => /^\s*(select|with)\b/i.test(sql);
+async function withRetry(sql, attempt) {
+  for (let i = 1; ; i++) {
+    try {
+      return await attempt();
+    } catch (err) {
+      const retriable = CONNECT_FAILURE.test(String(err?.message)) && (isReadOnly(sql) || /trying to connect|connection timeout/i.test(String(err?.message)));
+      if (!retriable || i >= 3) throw err;
+      console.warn(`[db] ${err.message}; retrying (${i})`);
+      await new Promise((r) => setTimeout(r, 400 * i));
+    }
+  }
+}
+
 // ---------- The db object ----------
 function wrap(exec) {
-  const run = (sql, args) => exec(toPg(withReturning(sql)), args.map(param));
+  const run = (sql, args) => withRetry(sql, () => exec(toPg(withReturning(sql)), args.map(param)));
   return {
     async get(sql, ...args) { const r = await run(sql, args); return plain(r.rows, r.fields)[0]; },
     async all(sql, ...args) { const r = await run(sql, args); return plain(r.rows, r.fields); },
@@ -137,7 +156,7 @@ async function migrate() {
   const driver = await driverReady;
   await driver.query('CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)');
   const appliedNames = async (q) => new Set((await q('SELECT name FROM schema_migrations')).rows.map((r) => r.name));
-  const before = await appliedNames(driver.query);
+  const before = await withRetry('select', () => appliedNames(driver.query));
   if (MIGRATIONS.every((m) => before.has(m.name))) return;
   await driver.transaction(async (q) => {
     await q('SELECT pg_advisory_xact_lock(735412)');
@@ -151,4 +170,16 @@ async function migrate() {
   });
 }
 
-export const dbReady = migrate();
+// The database is ready once migrations ran. A failed attempt (say Neon was still
+// waking up) is forgotten, so the next request tries again instead of the whole
+// process crashing on an unhandled rejection.
+let ready = null;
+export function ensureDb() {
+  ready ??= migrate().catch((err) => {
+    ready = null;
+    throw err;
+  });
+  return ready;
+}
+export const dbReady = ensureDb();
+dbReady.catch((err) => console.error('[db] not ready yet:', err.message));
