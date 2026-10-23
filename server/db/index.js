@@ -7,11 +7,12 @@
 //   await db.tx(async (t) => { await t.get(...); ... })  -> interactive transaction
 import { createClient } from '@libsql/client';
 import { mkdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { config, ROOT } from '../config.js';
+import { dirname } from 'node:path';
+import { config } from '../config.js';
 import { MIGRATIONS } from './schema.js';
 
-if (config.dbUrl.startsWith('file:')) mkdirSync(join(ROOT, 'data'), { recursive: true });
+// A local file database needs its folder to exist first.
+if (config.dbUrl.startsWith('file:')) mkdirSync(dirname(config.dbUrl.slice(5)), { recursive: true });
 
 const client = createClient({ url: config.dbUrl, authToken: config.dbAuthToken });
 
