@@ -9,8 +9,11 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const env = process.env;
 
 export const config = {
-  // Turso in production; a local SQLite file for development.
-  dbUrl: env.TURSO_DATABASE_URL || `file:${join(ROOT, 'data', 'dev.db').replace(/\\/g, '/')}`,
+  // Turso in production; a local SQLite file for development. On Vercel without
+  // Turso (a preview before the database is set up) only /tmp is writable, so
+  // the data there is temporary.
+  dbUrl: env.TURSO_DATABASE_URL
+    || (env.VERCEL ? 'file:/tmp/brj-preview.db' : `file:${join(ROOT, 'data', 'dev.db').replace(/\\/g, '/')}`),
   dbAuthToken: env.TURSO_AUTH_TOKEN || undefined,
 
   gemini: {
