@@ -76,6 +76,10 @@ export default async function render(el) {
           </div>` : ''}
           <p class="form-error" id="auth-error" role="alert" hidden></p>
           <button class="btn btn-primary btn-block" type="submit" id="auth-submit">${signup ? 'Create account' : 'Sign in'}</button>
+          <div class="guest-row" id="guest-row" hidden>
+            <span class="hint">Just looking around?</span>
+            <button class="btn btn-secondary btn-block" type="button" id="guest-btn">Continue as guest</button>
+          </div>
           <p class="auth-switch hint">${signup
             ? html`Already have an account? <a href="/signin${qs}" data-link>Sign in</a>`
             : html`New here? <a href="/signup${qs}" data-link>Create an account</a>`}</p>
@@ -99,6 +103,21 @@ export default async function render(el) {
   const errorEl = $('#auth-error', el);
   const submit = $('#auth-submit', el);
   form.querySelector('input').focus({ preventScroll: true });
+
+  // Test deployments offer a one-click guest account.
+  api('/health').then((h) => { if (h.guest) $('#guest-row', el).hidden = false; }).catch(() => {});
+  $('#guest-btn', el).addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    try {
+      await api('/auth/guest', { method: 'POST' });
+      await loadMe();
+      navigate(safeNext, { replace: true });
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.hidden = false;
+      e.target.disabled = false;
+    }
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

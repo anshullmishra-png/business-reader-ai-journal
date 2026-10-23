@@ -36,6 +36,16 @@ const sameText = (a, b) => {
 const sha256 = (s) => createHash('sha256').update(s).digest('hex');
 export const newCaptureToken = () => randomBytes(24).toString('base64url');
 
+/** A throwaway free-plan account for testing (only when ALLOW_GUEST=1). */
+export async function signUpGuest() {
+  if (!config.allowGuest) throw httpError(404, 'Guest access is off.');
+  const id = randomBytes(5).toString('hex');
+  const { lastInsertRowid } = await db.run(
+    `INSERT INTO users (email, name, password_hash, capture_token, plan, created_at) VALUES (?, ?, ?, ?, 'free', ?)`,
+    `guest-${id}@guest.readout`, 'Guest', await hashPassword(randomBytes(24).toString('base64url')), newCaptureToken(), now());
+  return createAuthSession(lastInsertRowid);
+}
+
 export async function signUp({ name, email, password, invite }) {
   if (!config.inviteCode && !config.paidInviteCode) throw httpError(503, "Sign-up isn't open yet.");
   const plan = planForCode(invite);

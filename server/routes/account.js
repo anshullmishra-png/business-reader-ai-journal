@@ -6,7 +6,7 @@ import { config } from '../config.js';
 import { callsToday, appSpendToday, appSpendTotal, keyFor } from '../ai/gemini.js';
 import { articlesToday, articleBlock } from '../services/sessions.js';
 import {
-  signUp, signIn, signOut, readCookie, setSessionCookie, clearSessionCookie, requireUser,
+  signUp, signUpGuest, signIn, signOut, readCookie, setSessionCookie, clearSessionCookie, requireUser,
   publicUser, updateSettings, regenerateCaptureToken, redeemPaidCode,
 } from '../services/auth.js';
 
@@ -23,6 +23,11 @@ const SignUp = z.object({
 authRouter.post('/signup', async (req, res) => {
   const body = SignUp.parse(req.body);
   setSessionCookie(req, res, await signUp(body));
+  res.status(201).json({ ok: true });
+});
+
+authRouter.post('/guest', async (req, res) => {
+  setSessionCookie(req, res, await signUpGuest());
   res.status(201).json({ ok: true });
 });
 

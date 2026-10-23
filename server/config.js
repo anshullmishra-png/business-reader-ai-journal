@@ -41,6 +41,9 @@ export const config = {
   // (and upgrades an existing account when entered in Settings).
   inviteCode: env.INVITE_CODE || '',
   paidInviteCode: env.INVITE_CODE_PAID || '',
+  // Testing only: a "Continue as guest" button that makes a throwaway free-plan
+  // account in one click, no invite code. Set ALLOW_GUEST=1 on test deployments only.
+  allowGuest: env.ALLOW_GUEST === '1',
   // New articles each person may start per day (each one runs ~5 AI calls).
   articlesPerDay: Number(env.ARTICLES_PER_DAY) || 1,
   // Safety ceiling on AI calls per person per day: one article, its retries,

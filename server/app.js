@@ -3,6 +3,7 @@
 import express from 'express';
 import { ZodError } from 'zod';
 import { dbReady } from './db/index.js';
+import { config } from './config.js';
 import { requireUser } from './services/auth.js';
 import { authRouter, meRouter } from './routes/account.js';
 import { sessionsRouter } from './routes/sessions.js';
@@ -34,7 +35,7 @@ app.use((req, res, next) => {
 app.use(async (_req, _res, next) => { await dbReady; next(); });
 app.use(express.json({ limit: '2mb' }));
 
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, guest: config.allowGuest }));
 app.get('/api/meta', (_req, res) => res.json({ sectors: SECTORS, company_stages: COMPANY_STAGES, sources: SOURCES }));
 
 app.use('/api/auth', authRouter);
