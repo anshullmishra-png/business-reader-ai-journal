@@ -22,7 +22,7 @@ export function setHeader({ title = '', pdf = null, ghost } = {}) {
   pdfBtn.onclick = pdf ? () => window.open(pdf, '_blank') : null;
 }
 
-/** Vertical stage tracker: completed in emerald, current in gold, the rest grey. */
+/** Vertical stage tracker: completed filled in ink, current in black, the rest hairline. */
 export function trackerHtml(stage, { times = {} } = {}) {
   const current = STAGES.findIndex((s) => s.key === stage);
   return html`<ol class="tracker" aria-label="Session stages">
