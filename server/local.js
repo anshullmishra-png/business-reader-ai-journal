@@ -31,6 +31,7 @@ server.use((req, res, next) => {
 
 server.listen(config.port, '127.0.0.1', () => {
   console.log(`\n  Readout (development) at http://localhost:${config.port}`);
-  console.log(`  Database: ${config.dbUrl.startsWith('file:') ? config.dbUrl.slice(5) : 'Turso'}`);
-  console.log(`  AI: ${config.gemini.apiKey ? 'Gemini' : 'not configured (set GEMINI_API_KEY in .env.local)'}\n`);
+  console.log(`  Database: ${config.databaseUrl ? 'Neon Postgres' : `PGlite (${config.localDbDir})`}`);
+  const keys = [config.gemini.freeApiKey && 'free key', config.gemini.apiKey && 'paid key'].filter(Boolean);
+  console.log(`  AI: ${keys.length ? `Gemini (${keys.join(' + ')})` : 'not configured (set GEMINI_API_KEY_FREE in .env.local)'}\n`);
 });

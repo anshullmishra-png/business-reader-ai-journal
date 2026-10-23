@@ -54,7 +54,7 @@ flowchart LR
     API["Express 5<br/>(one Vercel function)"]
     JOBS["Background jobs<br/>(waitUntil + resume on poll)"]
   end
-  DB[("Turso<br/>(libSQL)")]
+  DB[("Neon<br/>(Postgres)")]
   AI["Google Gemini<br/>3.6 Flash / 3.1 Flash-Lite"]
   EXT -- "article text + capture token" --> API
   UI -- "REST /api, session cookie" --> API
@@ -66,7 +66,7 @@ flowchart LR
 ```
 
 - **Server:** Express 5 exported as a single Vercel function ([`api/index.js`](api/index.js)); locally, [`server/local.js`](server/local.js) serves the same app.
-- **Database:** Turso (libSQL) in production, a local SQLite file in development; versioned migrations in [`server/db/schema.js`](server/db/schema.js).
+- **Database:** Neon Postgres in production, [PGlite](https://pglite.dev) (Postgres in WebAssembly) in development, so both run the same SQL; versioned migrations in [`server/db/schema.js`](server/db/schema.js).
 - **Accounts:** email and password (scrypt), httpOnly session cookie, sign-up gated by an invite code.
 - **Frontend:** plain HTML, CSS and ES modules. No framework, no build step.
 
@@ -87,7 +87,7 @@ On the free key, Readout costs nothing. On the paid key, one article end to end 
 
 | Variable | What it is |
 |---|---|
-| `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | The Turso database |
+| `DATABASE_URL` | The Neon Postgres connection string (pooled) |
 | `GEMINI_API_KEY_FREE` | Free-tier key (a Google project without billing). Free-plan accounts only ever use this |
 | `GEMINI_API_KEY` | Paid key (prepaid credit). Paid-plan accounts use it until a budget is hit, then fall back to the free key |
 | `INVITE_CODE` | Sign-up code for a free-plan account |
@@ -97,7 +97,7 @@ On the free key, Readout costs nothing. On the paid key, one article end to end 
 | `LIFETIME_BUDGET_USD` | All-time Gemini spend cap (default 4.80); raise it after a top-up |
 | `AI_DAILY_LIMIT` | AI calls per person per day (default 30) |
 
-**Locally:** Node.js 22+, then `npm install`, a `.env.local` with the variables above (the Turso ones are optional: without them a local SQLite file in `data/` is used), and `npm run dev`. On Windows, double-clicking `start.bat` does the same. Readout opens on http://localhost:4317.
+**Locally:** Node.js 22+, then `npm install`, a `.env.local` with the variables above (`DATABASE_URL` is optional: without it a local Postgres is kept in `data/pglite`), and `npm run dev`. On Windows, double-clicking `start.bat` does the same. Readout opens on http://localhost:4317.
 
 **Extension:** in Readout, open **Account → Browser extension**, download the zip, then Load unpacked in `chrome://extensions` and paste your capture token. After changing the extension, run `npm run pack-extension` to rebuild the zip.
 
@@ -111,6 +111,6 @@ On the free key, Readout costs nothing. On the paid key, one article end to end 
 ## Credits
 
 - Type: [Archivo](https://fonts.google.com/specimen/Archivo) and [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono) via Google Fonts.
-- [Chart.js](https://www.chartjs.org), [Lucide](https://lucide.dev) icons, [Mozilla Readability](https://github.com/mozilla/readability), [jsdom](https://github.com/jsdom/jsdom), [zod](https://zod.dev), [libSQL](https://github.com/tursodatabase/libsql-client-ts), [Google Gen AI SDK](https://github.com/googleapis/js-genai).
+- [Chart.js](https://www.chartjs.org), [Lucide](https://lucide.dev) icons, [Mozilla Readability](https://github.com/mozilla/readability), [jsdom](https://github.com/jsdom/jsdom), [zod](https://zod.dev), [node-postgres](https://node-postgres.com), [PGlite](https://pglite.dev), [Google Gen AI SDK](https://github.com/googleapis/js-genai).
 
 Licensed under the [MIT License](LICENSE).

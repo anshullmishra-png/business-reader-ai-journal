@@ -123,11 +123,11 @@ export async function addExamples(userId, id) {
 }
 
 export async function listTerms(userId, { q = '', sort = 'az', sector = '' } = {}) {
-  const order = { az: 'g.display_term COLLATE NOCASE ASC', count: 'g.lookup_count DESC, g.display_term COLLATE NOCASE',
-    newest: 'g.created_at DESC' }[sort] ?? 'g.display_term COLLATE NOCASE ASC';
+  const order = { az: 'lower(g.display_term) ASC', count: 'g.lookup_count DESC, lower(g.display_term)',
+    newest: 'g.created_at DESC' }[sort] ?? 'lower(g.display_term) ASC';
   const where = ['g.user_id = ?'];
   const params = [userId];
-  if (q) { where.push('(g.display_term LIKE ? OR g.term_normalized LIKE ? OR g.entry LIKE ?)'); params.push(`%${q}%`, `%${q}%`, `%${q}%`); }
+  if (q) { where.push('(g.display_term ILIKE ? OR g.term_normalized ILIKE ? OR g.entry ILIKE ?)'); params.push(`%${q}%`, `%${q}%`, `%${q}%`); }
   if (sector) { where.push('g.sector = ?'); params.push(sector); }
   return (await db.all(`${SELECT} WHERE ${where.join(' AND ')} ORDER BY ${order}`, ...params)).map(hydrate);
 }

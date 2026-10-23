@@ -9,12 +9,11 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const env = process.env;
 
 export const config = {
-  // Turso in production; a local SQLite file for development. On Vercel without
-  // Turso (a preview before the database is set up) only /tmp is writable, so
-  // the data there is temporary.
-  dbUrl: env.TURSO_DATABASE_URL
-    || (env.VERCEL ? 'file:/tmp/brj-preview.db' : `file:${join(ROOT, 'data', 'dev.db').replace(/\\/g, '/')}`),
-  dbAuthToken: env.TURSO_AUTH_TOKEN || undefined,
+  // Neon Postgres in production (Vercel's Neon integration also sets POSTGRES_URL).
+  // Without one, PGlite keeps a local Postgres in data/pglite; on Vercel only /tmp
+  // is writable, so a deployment without a database keeps temporary data there.
+  databaseUrl: env.DATABASE_URL || env.POSTGRES_URL || '',
+  localDbDir: env.VERCEL ? '/tmp/readout-pglite' : join(ROOT, 'data', 'pglite'),
 
   gemini: {
     // Two keys: the paid key (prepaid credit, capped below) and a free-tier key

@@ -32,7 +32,7 @@ async function readiness(userId, difficulty, scoredDesc) {
   const { n: covered } = await db.get(`SELECT COUNT(*) AS n FROM (
     SELECT q.framework FROM questions q JOIN question_sets qs ON qs.id = q.set_id JOIN sessions s ON s.id = qs.session_id
     WHERE s.user_id = ? AND qs.status = 'evaluated' AND qs.completed_at >= ? AND q.score IS NOT NULL
-    GROUP BY q.framework HAVING AVG(q.score) >= 5)`, userId, since);
+    GROUP BY q.framework HAVING AVG(q.score) >= 5) AS covered`, userId, since);
   const parts = {
     scores: last7.length ? mean(last7) * 10 : 0,
     difficulty: difficulty * 10,
