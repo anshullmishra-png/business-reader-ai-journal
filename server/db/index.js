@@ -52,12 +52,19 @@ async function neonDriver(url) {
   const { default: pg } = await import('pg');
   pg.types.setTypeParser(20, (v) => Number(v));   // bigint (COUNT, SUM of integers)
   pg.types.setTypeParser(1700, (v) => Number(v)); // numeric (AVG)
+  // TLS is set explicitly (verified certificate, channel binding as Neon asks),
+  // so the URL's sslmode/channel_binding hints are dropped rather than reinterpreted.
+  const local = /localhost|127\.0\.0\.1/.test(url);
+  const u = new URL(url);
+  u.searchParams.delete('sslmode');
+  u.searchParams.delete('channel_binding');
   const pool = new pg.Pool({
-    connectionString: url,
+    connectionString: u.toString(),
     max: config.isVercel ? 3 : 10,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 15_000,
-    ssl: /localhost|127\.0\.0\.1/.test(url) ? undefined : { rejectUnauthorized: false },
+    ssl: local ? undefined : { rejectUnauthorized: true },
+    enableChannelBinding: !local,
   });
   pool.on('error', (err) => console.error('[db] idle client error', err.message));
   return {
