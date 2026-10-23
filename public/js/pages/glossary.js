@@ -136,7 +136,7 @@ export default async function render(el) {
         </select>
       </div>
 
-      <div id="g-list">
+      <div id="g-list" class="inverted g-list">
         ${terms.length ? terms.map((t) => html`
           <div class="card g-item ${state.open === t.id ? raw('is-open') : ''}">
             <button class="g-head" type="button" data-open="${t.id}" aria-expanded="${String(state.open === t.id)}">

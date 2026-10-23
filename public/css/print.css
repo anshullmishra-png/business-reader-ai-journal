@@ -1,8 +1,17 @@
-/* Print-optimised reports (A4). On screen they show as a paper preview. */
+/* Print-optimised reports (A4): oxblood ink on white paper, Archivo + Plex Mono.
+   On screen they show as a paper preview on the oxblood field. */
+:root {
+  --text: #70020F; --text-2: rgba(112, 2, 15, 0.85); --text-muted: rgba(112, 2, 15, 0.68); --text-faint: rgba(112, 2, 15, 0.52);
+  --border: rgba(112, 2, 15, 0.3); --border-subtle: rgba(112, 2, 15, 0.16); --accent: #0A0708;
+  --score-low: #70020F; --score-mid: #70020F; --score-high: #70020F;
+  --font-ui: 'Archivo', system-ui, sans-serif; --font-content: 'Archivo', system-ui, sans-serif;
+}
+.r-title, .score, .tile-value, .hero-score { font-stretch: 125%; font-variation-settings: 'wdth' 125; text-transform: uppercase; }
+.r-kicker, .r-h2, .tile-label, .q-tags, .q-col-label, .chart-cap, table.t th { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.14em; }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body {
-  margin: 0; background: #EDEDED; color: var(--text);
+  margin: 0; background: #70020F; color: var(--text);
   font-family: var(--font-ui); font-size: 10.5pt; line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -13,28 +22,28 @@ a { color: inherit; }
 .print-toolbar {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; gap: 16px; padding: 12px 24px;
-  background: #fff; border-bottom: 1px solid var(--border);
+  background: #0A0708; color: #FEDEE1; border-bottom: 1px solid rgba(254,222,225,0.28);
   font-size: 13px;
 }
-.tb-link { color: var(--text-muted); text-decoration: none; font-weight: 700; }
-.tb-hint { flex: 1; color: var(--text-faint); }
+.tb-link { color: #FEDEE1; text-decoration: none; font-weight: 700; }
+.tb-hint { flex: 1; color: rgba(254,222,225,0.62); }
 .tb-btn {
-  height: 36px; padding: 0 16px; border-radius: var(--r-card); border: none; cursor: pointer;
-  background: var(--accent); color: #fff; font: inherit; font-weight: 700;
+  height: 36px; padding: 0 16px; border-radius: 0; border: none; cursor: pointer;
+  background: #FEDEE1; color: #0A0708; font: inherit; font-weight: 700;
 }
 .tb-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* ---------- The sheet ---------- */
 .sheet {
   width: 210mm; min-height: 297mm; margin: 24px auto; padding: 16mm;
-  background: #fff; box-shadow: 0 20px 50px -20px rgba(24, 24, 27, 0.35);
+  background: #fff; 
 }
 
 @page {
   size: A4;
   margin: 16mm 16mm 18mm;
-  @bottom-left { content: "Business Reads Journal"; font-family: 'Inter', sans-serif; font-size: 8pt; color: #A3A3A3; }
-  @bottom-right { content: counter(page) " / " counter(pages); font-family: 'Inter', sans-serif; font-size: 8pt; color: #A3A3A3; }
+  @bottom-left { content: "Business Reads Journal"; font-family: 'IBM Plex Mono', monospace; font-size: 8pt; color: #A3A3A3; }
+  @bottom-right { content: counter(page) " / " counter(pages); font-family: 'IBM Plex Mono', monospace; font-size: 8pt; color: #A3A3A3; }
 }
 
 @media print {
@@ -63,7 +72,7 @@ a { color: inherit; }
 .score-high { color: var(--score-high); }
 
 /* ---------- Blocks ---------- */
-.block { border: 1px solid var(--border); border-radius: 8pt; padding: 10pt 12pt; break-inside: avoid; }
+.block { border: 1px solid var(--border); border-radius: 0; padding: 10pt 12pt; break-inside: avoid; }
 .block + .block { margin-top: 8pt; }
 .block.flow { break-inside: auto; } /* long text may continue on the next page */
 .hero { display: flex; gap: 18pt; align-items: center; margin-top: 14pt; }
@@ -72,7 +81,7 @@ a { color: inherit; }
 .hero-split { display: flex; gap: 16pt; margin-top: 6pt; font-size: 9pt; font-weight: 700; color: var(--text-muted); }
 
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6pt; }
-.tile { border: 1px solid var(--border); border-radius: 6pt; padding: 7pt 9pt; break-inside: avoid; }
+.tile { border: 1px solid var(--border); border-radius: 0; padding: 7pt 9pt; break-inside: avoid; }
 .tile-label { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); }
 .tile-value { font-family: var(--font-content); font-weight: 800; font-size: 16pt; margin-top: 2pt; }
 
@@ -85,7 +94,7 @@ a { color: inherit; }
 .q-tags { font-size: 8pt; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; }
 .q-prompt { font-family: var(--font-content); font-size: 10.5pt; margin: 4pt 0 6pt; }
 .q-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; }
-.q-col { background: #FAFAFA; border-radius: 6pt; padding: 6pt 8pt; font-size: 9pt; }
+.q-col { background: rgba(112, 2, 15, 0.04); border-radius: 0; padding: 6pt 8pt; font-size: 9pt; }
 .q-col-label { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); margin-bottom: 2pt; }
 .q-feedback { font-size: 9pt; font-weight: 700; margin-top: 5pt; padding-left: 7pt; border-left: 2px solid var(--accent); }
 .mcq { font-size: 9pt; }

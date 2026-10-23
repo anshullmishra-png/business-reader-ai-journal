@@ -2,21 +2,33 @@
 let loading = null;
 
 export const C = {
-  ink: '#002D72',   // sapphire
-  mid: '#1E88E5',   // royal blue
-  light: '#8C919B',
-  faint: '#D1D5DB',
-  amber: '#F9A825', // gold accent
-  grid: '#ECE9E2',
-  text: '#5F6878',
+  ink: '#FEDEE1',                     // pale pink: the only light
+  mid: 'rgba(254, 222, 225, 0.62)',
+  light: 'rgba(254, 222, 225, 0.42)',
+  faint: 'rgba(254, 222, 225, 0.2)',
+  amber: '#0A0708',                   // black marks the latest point
+  grid: 'rgba(254, 222, 225, 0.14)',
+  text: 'rgba(254, 222, 225, 0.62)',
+  fill: 'rgba(254, 222, 225, 0.12)',
+  tipBg: '#0A0708',
+  tipFg: '#FEDEE1',
 };
 
-// Series are told apart by line style too, not by colour alone.
+// One hue, so series are told apart by line style as well as value.
 export const SERIES = [
   { color: C.ink, dash: [] },
   { color: C.mid, dash: [6, 4] },
   { color: C.light, dash: [2, 3] },
 ];
+
+/** Printed reports are oxblood ink on white paper. Call before loadChart(). */
+export function usePrintPalette() {
+  Object.assign(C, {
+    ink: '#70020F', mid: 'rgba(112, 2, 15, 0.62)', light: 'rgba(112, 2, 15, 0.4)', faint: 'rgba(112, 2, 15, 0.18)',
+    amber: '#0A0708', grid: 'rgba(112, 2, 15, 0.12)', text: 'rgba(112, 2, 15, 0.7)', fill: 'rgba(112, 2, 15, 0.08)',
+  });
+  SERIES[0].color = C.ink; SERIES[1].color = C.mid; SERIES[2].color = C.light;
+}
 
 export function loadChart() {
   loading ??= new Promise((resolve, reject) => {
@@ -31,8 +43,8 @@ export function loadChart() {
 
 function applyTheme(Chart) {
   const d = Chart.defaults;
-  d.font.family = "'Inter', ui-sans-serif, system-ui, sans-serif";
-  d.font.size = 12;
+  d.font.family = "'IBM Plex Mono', ui-monospace, monospace";
+  d.font.size = 11;
   d.color = C.text;
   d.borderColor = C.grid;
   d.animation = { duration: 250 };
@@ -43,11 +55,11 @@ function applyTheme(Chart) {
   d.plugins.legend.labels.color = C.mid;
   d.plugins.legend.align = 'start';
   Object.assign(d.plugins.tooltip, {
-    backgroundColor: C.ink,
-    titleColor: '#FAFAFA',
-    bodyColor: '#E4E4E7',
+    backgroundColor: C.tipBg ?? C.ink,
+    titleColor: C.tipFg ?? '#FFFFFF',
+    bodyColor: C.tipFg ?? '#FFFFFF',
     padding: 10,
-    cornerRadius: 8,
+    cornerRadius: 0,
     boxPadding: 4,
     usePointStyle: true,
   });
@@ -56,7 +68,7 @@ function applyTheme(Chart) {
   d.elements.point.radius = 0;
   d.elements.point.hoverRadius = 5;
   d.elements.point.hitRadius = 12;
-  d.elements.bar.borderRadius = 4;
+  d.elements.bar.borderRadius = 0;
   d.scale.grid.drawTicks = false;
   d.scale.border = { display: false };
   d.scale.ticks.padding = 8;
@@ -90,7 +102,7 @@ export const endLabels = {
       while (placed.some((p) => Math.abs(p - y) < 13)) y += 13; // avoid overlaps
       placed.push(y);
       ctx.save();
-      ctx.font = "700 11px 'Inter', system-ui, sans-serif";
+      ctx.font = "500 10px 'IBM Plex Mono', monospace";
       ctx.fillStyle = C.mid;
       ctx.textBaseline = 'middle';
       ctx.fillText(ds.label, pt.x + 10, y);
@@ -104,7 +116,7 @@ export function lastPointAmber(n, color) {
   return {
     pointRadius: (ctx) => (ctx.dataIndex === n - 1 ? 5 : 0),
     pointBackgroundColor: (ctx) => (ctx.dataIndex === n - 1 ? C.amber : color),
-    pointBorderColor: '#FFFFFF',
+    pointBorderColor: C.ink,
     pointBorderWidth: 2,
   };
 }

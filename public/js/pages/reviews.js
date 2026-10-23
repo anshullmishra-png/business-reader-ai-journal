@@ -9,11 +9,11 @@ function points(list) {
   return html`<ul class="review-points">${list.map((p) => html`<li><strong>${p.point}</strong><span>${p.evidence}</span></li>`)}</ul>`;
 }
 
-function reviewCard(r) {
+function reviewCard(r, latest = false) {
   const c = r.content;
   const s = c.stats ?? {};
   return html`
-    <article class="card review">
+    <article class="card review ${latest ? 'inverted' : ''}">
       <div class="review-head">
         <div class="meta-row" style="margin:0"><span>${fmtDate(r.period_start)} – ${fmtDate(r.period_end)}</span>
           <span>${r.session_ids.length} session${r.session_ids.length === 1 ? '' : 's'}</span></div>
@@ -55,7 +55,7 @@ export default async function render(el) {
           <p class="status-line">${raw(icon('loader-circle', 'spin'))}Writing this week's review…</p>
           <div class="skeleton skeleton-line w-80"></div><div class="skeleton skeleton-line w-60"></div></div>` : ''}
         ${!pending && last_failed ? html`<p class="hint" style="margin-bottom:12px">The last review couldn't be written. It will be retried next time you open the app.</p>` : ''}
-        ${reviews.length ? reviews.map(reviewCard) : !pending ? html`<div class="empty">${drawing('letter')}
+        ${reviews.length ? reviews.map((r, i) => reviewCard(r, i === 0)) : !pending ? html`<div class="empty">${drawing('letter')}
           <div class="empty-title">No reviews yet</div>Your first review is written after 7 scored sessions or 7 days.</div>` : ''}
       </section>`.toString();
     clearTimeout(timer);

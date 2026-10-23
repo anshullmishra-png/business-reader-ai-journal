@@ -44,7 +44,7 @@ export default async function render(el) {
 
     <div class="bento">
       <div class="stack">
-        <section class="card add-card">
+        <section class="card hard add-card">
           <div class="card-head">
             <h2 class="card-title">${raw(icon('plus'))}Start a session</h2>
             <div class="segmented" role="tablist" aria-label="How to add an article">
@@ -84,7 +84,7 @@ export default async function render(el) {
           <div id="add-status" aria-live="polite"></div>
         </section>
 
-        <section class="card list-card">
+        <section class="card inverted list-card">
           <div class="card-head">
             <h2 class="card-title">${raw(icon('sun'))}Today's sessions</h2>
             <a class="link-quiet" href="/history" data-link>All history ${raw(icon('chevron-right'))}</a>
@@ -103,7 +103,7 @@ export default async function render(el) {
             </li>`)}
           </ol>
         </section>
-        <section class="card card-accent">
+        <section class="card card-soft">
           <h2 class="card-title">${raw(icon('puzzle'))}Reading a paywalled story?</h2>
           <p>The <strong>Send to Journal</strong> extension sends the full text you can see while logged in, straight from the article tab.</p>
           <div><a class="btn btn-secondary" href="/extension" data-link>Install the extension</a></div>

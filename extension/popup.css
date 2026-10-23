@@ -1,35 +1,41 @@
+/* Same single-hue poster system as the journal: oxblood field, pale pink type,
+   black buttons, square corners, hairlines. System fonts (no network fonts). */
 :root {
-  --bg: #FFFFFF;
-  --text: #18181B;
-  --muted: #737373;
-  --faint: #A3A3A3;
-  --border: #E5E5E5;
-  --accent: #18181B;
-  --ok: #15803D;
-  --bad: #B91C1C;
+  --bg: #70020F;
+  --text: #FEDEE1;
+  --muted: rgba(254, 222, 225, 0.62);
+  --faint: rgba(254, 222, 225, 0.45);
+  --border: rgba(254, 222, 225, 0.28);
+  --accent: #0A0708;
+  --ok: #FEDEE1;
+  --bad: #FEDEE1;
+  --display: 'Arial Black', 'Segoe UI Black', system-ui, sans-serif;
+  --mono: Consolas, 'Cascadia Mono', ui-monospace, monospace;
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; border-radius: 0 !important; }
 body {
   width: 340px; margin: 0; padding: 16px;
   background: var(--bg); color: var(--text);
   font: 14px/1.5 'Segoe UI', system-ui, sans-serif;
 }
-.top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.brand { font-weight: 800; font-size: 15px; letter-spacing: -0.01em; }
-.title { font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 17px; line-height: 1.3; margin: 0 0 6px; }
-.meta { color: var(--faint); font-size: 12px; font-weight: 600; margin-bottom: 14px; }
+.top { display: flex; align-items: center; gap: 10px; margin: -16px -16px 16px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.top img { display: none; }
+.brand { font-family: var(--display); font-weight: 900; font-size: 15px; text-transform: uppercase; letter-spacing: -0.01em; }
+.title { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 16px; line-height: 1.15; margin: 0 0 8px; }
+.meta { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); font-size: 11px; margin-bottom: 16px; }
 .muted { color: var(--muted); margin: 0; }
-.error { color: var(--bad); margin: 0 0 12px; }
-.ok { color: var(--ok); font-weight: 700; margin: 0 0 12px; font-size: 15px; }
+.error { margin: 0 0 12px; padding-left: 10px; border-left: 2px solid var(--text); font-family: var(--mono); font-size: 12px; }
+.ok { font-family: var(--display); font-weight: 900; text-transform: uppercase; margin: 0 0 12px; font-size: 15px; }
 .btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; height: 40px; border-radius: 12px; border: 1px solid transparent;
-  background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer;
-  text-decoration: none; transition: transform 150ms ease-in-out, opacity 150ms ease-in-out;
+  width: 100%; min-height: 44px; border: 1px solid transparent;
+  background: var(--accent); color: var(--text); cursor: pointer; text-decoration: none;
+  font-family: var(--mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+  transition: opacity 200ms ease-in-out, background 200ms ease-in-out, color 200ms ease-in-out;
 }
-.btn:hover:not(:disabled) { transform: scale(1.02); }
+.btn:hover:not(:disabled) { opacity: 0.86; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-ghost { background: transparent; color: var(--text); border-color: var(--border); margin-top: 8px; }
-.btn-ghost:hover { background: #F9FAFB; transform: none; }
+.btn-ghost { background: transparent; color: var(--text); border-color: var(--text); margin-top: 8px; }
+.btn-ghost:hover { background: var(--text); color: var(--bg); opacity: 1; }
 a { color: var(--text); }
 .small { font-size: 12px; color: var(--muted); margin-top: 12px; }

@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Business Reads Journal</title>
   <meta name="description" content="Turn daily business reading into Chief of Staff interview practice.">
-  <meta name="theme-color" content="#002D72">
+  <meta name="theme-color" content="#70020F">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/layout.css">
@@ -23,7 +23,6 @@
     <header class="header" id="app-header" hidden>
       <div class="header-inner">
         <a class="brand" href="/" data-link>
-          <span class="brand-mark" data-icon="notebook-pen"></span>
           <span class="brand-name">Business Reads</span>
         </a>
         <nav class="topnav" aria-label="Main">
@@ -57,6 +56,13 @@
 
     <main class="main" id="main">
       <div class="content" id="content" tabindex="-1"></div>
+      <footer class="app-foot" id="app-foot" hidden>
+        <div class="foot-ghost" aria-hidden="true">Reads</div>
+        <div class="foot-row">
+          <span>© 2026 Business Reads Journal</span>
+          <nav aria-label="Footer"><a href="/about" data-link>About</a><a href="/extension" data-link>Extension</a></nav>
+        </div>
+      </footer>
     </main>
 
     <nav class="tabbar" id="tabbar" aria-label="Main" hidden>
@@ -68,7 +74,7 @@
     </nav>
 
     <div class="dict-scrim" id="dict-scrim"></div>
-    <aside class="dict" id="dict" aria-label="Dictionary"></aside>
+    <aside class="dict inverted" id="dict" aria-label="Dictionary"></aside>
   </div>
 </body>
 </html>

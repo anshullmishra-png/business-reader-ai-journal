@@ -1,10 +1,10 @@
-// Small line drawings for empty states. Sapphire strokes with one gold detail,
+// Small line drawings for empty states. Single-ink strokes with one heavier detail,
 // drawn on a 120x90 grid. Decorative: hidden from screen readers.
 import { raw } from './dom.js';
 
 const svg = (body) => raw(`<svg class="drawing" viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1.5"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`);
-const brand = 'stroke="var(--gold)"';
+const brand = 'stroke-width="2.25"';
 
 export const DRAWINGS = {
   // A folded morning paper and a cup.
@@ -32,7 +32,7 @@ export const DRAWINGS = {
     <path d="M34 76l12-10M86 76L74 66M60 66v12"/>
     <path d="M32 56h56" stroke-dasharray="2 4"/>
     <path d="M34 52l14-10 10 6 14-16 14 6" ${brand} stroke-width="2"/>
-    <circle cx="86" cy="38" r="2.5" fill="var(--gold)" stroke="none"/>`),
+    <circle cx="86" cy="38" r="2.5" fill="currentColor" stroke="none"/>`),
 
   // A letter coming out of an envelope.
   letter: svg(`

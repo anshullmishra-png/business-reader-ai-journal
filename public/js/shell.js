@@ -13,9 +13,10 @@ export const STAGES = [
 ];
 
 // Called by each page on render. `pdf` shows the header download button.
-// (`pill` and `stage` are accepted for compatibility; the session page draws its own tracker.)
-export function setHeader({ title = '', pdf = null } = {}) {
+// `ghost` is the oversized tone-on-tone word behind the page (defaults to the title's first word).
+export function setHeader({ title = '', pdf = null, ghost } = {}) {
   document.title = title ? `${title} · Business Reads Journal` : 'Business Reads Journal';
+  $('#content').dataset.ghost = (ghost ?? title.split(/\s+/)[0] ?? '').slice(0, 12);
   const pdfBtn = $('#pdf-btn');
   pdfBtn.hidden = !pdf;
   pdfBtn.onclick = pdf ? () => window.open(pdf, '_blank') : null;
@@ -55,6 +56,7 @@ export function setProfile({ name, email }) {
 export function showChrome(signedIn) {
   $('#app-header').hidden = !signedIn;
   $('#tabbar').hidden = !signedIn;
+  $('#app-foot').hidden = !signedIn;
   document.body.classList.toggle('signed-out', !signedIn);
 }
 

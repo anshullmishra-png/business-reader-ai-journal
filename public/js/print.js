@@ -4,7 +4,9 @@ import { html, raw, $, scoreClass } from './lib/dom.js';
 import { api } from './lib/api.js';
 import { SOURCE_LABELS, fmtDate, fmtScore, fmtMaybeDate } from './lib/format.js';
 import { comprehensionWords } from './lib/words.js';
-import { loadChart, C, SERIES, dayLabels } from './lib/charts.js';
+import { loadChart, C, SERIES, dayLabels, usePrintPalette } from './lib/charts.js';
+
+usePrintPalette();
 
 const TYPE_LABELS = { mcq: 'Multiple choice', short: 'Short answer', structured: 'Structured', estimation: 'Estimation' };
 const LEVEL_LABELS = { easy: 'Easy', medium: 'Medium', hard: 'Hard', super_hard: 'Super hard' };
@@ -166,7 +168,7 @@ async function portfolioReport() {
     chartImage({
       type: 'radar',
       data: { labels: p.frameworks.all.map((f) => f.framework), datasets: [{ label: 'Average', data: p.frameworks.all.map((f) => f.avg),
-        borderColor: C.ink, backgroundColor: 'rgba(24,24,27,0.08)', pointRadius: 2, pointBackgroundColor: C.ink }] },
+        borderColor: C.ink, backgroundColor: C.fill, pointRadius: 2, pointBackgroundColor: C.ink }] },
       options: { plugins: { legend: { display: false } }, scales: { r: { min: 0, max: 10, ticks: { stepSize: 2, backdropColor: 'transparent' },
         pointLabels: { font: { size: 10 }, color: C.mid } } } },
     }, { width: 400, height: 340 }),

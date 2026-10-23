@@ -68,7 +68,7 @@ export default async function render(el, { id }) {
   }
   const m = await getMeta();
 
-  setHeader({ title: s.title });
+  setHeader({ title: s.title, ghost: 'Read' });
 
   const published = fmtMaybeDate(s.published_at);
   el.innerHTML = html`
@@ -86,7 +86,7 @@ export default async function render(el, { id }) {
     </header>
 
     <div class="session-layout">
-      <div class="session-main" id="stage"></div>
+      <div class="session-main inverted" id="stage"></div>
       <aside class="session-side" data-hide-in-interview>
         <section class="card">
           <div class="label">Progress</div>
@@ -111,7 +111,7 @@ export default async function render(el, { id }) {
   const drawStage = () => {
     stageCleanup?.();
     stageCleanup = null;
-    setHeader({ title: s.title, pdf: reportUrl() });
+    setHeader({ title: s.title, pdf: reportUrl(), ghost: 'Read' });
     $('#tracker', el).innerHTML = trackerHtml(s.stage, { times: { verdictDone: s.overall_score != null } }).toString();
     el.querySelector('.session-layout').classList.toggle('is-interview', s.stage === 'interview');
     const stageEl = $('#stage', el);
@@ -124,7 +124,7 @@ export default async function render(el, { id }) {
         heading: stageHeading('interview'),
         sessionId: s.id,
         setId: s.main_set.id,
-        onProgress: (q) => setHeader({ title: `Q${q.position}/${q.total} · ${s.title}` }),
+        onProgress: (q) => setHeader({ title: `Q${q.position}/${q.total} · ${s.title}`, ghost: `Q${q.position}` }),
         onDone: async () => {
           s = await api(`/sessions/${id}`);
           setTimeout(() => { drawStage(); window.scrollTo(0, 0); }, 900);
@@ -139,7 +139,7 @@ export default async function render(el, { id }) {
       lockedEl.className = 'section';
       stageEl.append(verdictEl, lockedEl);
       stageCleanup = renderVerdict(verdictEl, s, {
-        setHeaderPill: () => setHeader({ title: s.title, pdf: reportUrl() }),
+        setHeaderPill: () => setHeader({ title: s.title, pdf: reportUrl(), ghost: 'Verdict' }),
       });
       renderLockedComprehension(lockedEl, s);
       return;

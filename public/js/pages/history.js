@@ -67,7 +67,7 @@ export default async function render(el) {
         <button class="btn btn-ghost btn-sm" type="button" id="f-clear">Clear</button>
       </div>
     </section>
-    <section class="card list-card">
+    <section class="card inverted list-card">
       <div class="card-head"><h2 class="card-title">${raw(icon('history'))}Sessions</h2><span class="hint" id="f-count"></span></div>
       <div id="history-list"></div>
     </section>`.toString();

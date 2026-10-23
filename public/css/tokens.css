@@ -1,80 +1,65 @@
-/* Design tokens: "premium corporate". Sapphire for authority, gold for action,
-   ivory page background. Inter throughout. Light mode only. */
+/* Design tokens: a single-hue print poster. Oxblood owns the canvas, pale pink is
+   the only light, a tone-on-tone ghost gives depth, black is for hard surfaces.
+   Components read the semantic names (--ground, --ink, --rule…), so `.inverted`
+   and `.hard` can swap the whole palette for one section. */
 :root {
-  /* Brand */
-  --sapphire: #002D72;
-  --sapphire-90: #1A4283;
-  --sapphire-10: rgba(0, 45, 114, 0.10);
-  --gold: #F9A825;
-  --gold-hover: #F2A01A;
-  --gold-soft: #FFF3D6;
-  --emerald: #10B981;
-  --emerald-text: #047857;
-  --royal: #1E88E5;
+  /* The four colours */
+  --oxblood: #70020F;
+  --ghost-tone: #8A0A18;
+  --pink: #FEDEE1;
+  --black: #0A0708;
 
-  /* Surfaces */
-  --bg: #FFF8E1;               /* ivory page */
-  --surface: #FFFFFF;          /* cards */
-  --surface-raised: #FFFFFF;
-  --surface-hover: #F9F8F6;    /* row hover */
-  --highlight: #F4F1EC;        /* inner highlight boxes */
-
-  /* Lines */
-  --border: #E0DDD6;
-  --border-subtle: #ECE9E2;
-  --rule: #E0DDD6;
-  --track: #D1D5DB;            /* tracker line, pending markers */
-
-  /* Text */
-  --text: #0F1B33;
-  --text-2: #3D4656;
-  --text-muted: #5F6878;
-  --text-faint: #8C919B;
-
-  /* Score text (muted tones: no vibrant red) */
-  --score-low: #B4533D;
-  --score-mid: #002D72;
-  --score-high: #047857;
-
-  /* Legacy names used across the components, mapped to this system */
-  --accent: var(--sapphire);
-  --accent-fg: #FFFFFF;
-  --brand: var(--sapphire);
-  --brand-soft: var(--sapphire-10);
-  --ink: var(--sapphire);
-  --ink-2: var(--sapphire-90);
-  --zinc-900: #0F1B33;
-  --zinc-600: #5F6878;
-  --zinc-400: #A0A6B0;
-  --zinc-300: #C8CCD2;
-  --amber: var(--gold);
+  /* Semantic palette (default field: pink ink on oxblood) */
+  --ground: var(--oxblood);
+  --ink: var(--pink);
+  --ink-2: rgba(254, 222, 225, 0.62);   /* secondary text */
+  --ink-3: rgba(254, 222, 225, 0.45);   /* faint text, placeholders */
+  --rule: rgba(254, 222, 225, 0.28);    /* hairlines */
+  --hover: rgba(254, 222, 225, 0.06);   /* row hover */
+  --ghost: var(--ghost-tone);           /* oversized decorative type only */
+  --hard: var(--black);                 /* hard surfaces: buttons, the black card */
+  --on-hard: var(--pink);
 
   /* Type */
-  --font-ui: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
-  --font-content: var(--font-ui);
+  --font-display: 'Archivo', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
   --content-size: 16px;
-  --content-leading: 1.7;
-
-  /* Radii */
-  --r-tag: 6px;
-  --r-btn: 10px;
-  --r-card: 16px;
-  --r-box: 12px;
-  --r-input: 16px;
-  --r-pill: 9999px;
-
-  /* Shadows */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-input: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-pop: 0 12px 32px -12px rgba(0, 45, 114, 0.25);
-  --focus-ring: 0 0 0 3px rgba(30, 136, 229, 0.35);
+  --content-leading: 1.65;
 
   /* Layout */
   --header-h: 64px;
   --tabbar-h: 72px;
-  --dict-w: 400px;
-  --content-max: 1200px;
+  --dict-w: 420px;
+  --content-max: 80rem;
 
   /* Motion */
   --ease: 200ms ease-in-out;
+}
+
+/* The one interior section a reader most needs to read flips the field. */
+.inverted {
+  --ground: var(--pink);
+  --ink: var(--oxblood);
+  --ink-2: rgba(112, 2, 15, 0.62);
+  --ink-3: rgba(112, 2, 15, 0.45);
+  --rule: rgba(112, 2, 15, 0.22);
+  --hover: rgba(112, 2, 15, 0.05);
+  --ghost: rgba(112, 2, 15, 0.07);
+  background: var(--ground);
+  color: var(--ink);
+}
+
+/* Pure black surface (the "event card"). */
+.hard {
+  --ground: var(--black);
+  --ink: var(--pink);
+  --ink-2: rgba(254, 222, 225, 0.62);
+  --ink-3: rgba(254, 222, 225, 0.45);
+  --rule: rgba(254, 222, 225, 0.28);
+  --hover: rgba(254, 222, 225, 0.06);
+  --hard: var(--pink);
+  --on-hard: var(--black);
+  background: var(--ground);
+  color: var(--ink);
 }

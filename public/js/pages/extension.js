@@ -7,7 +7,7 @@ import { appState } from '../app.js';
 const DEFAULT_SERVER = 'https://business-reads-journal.vercel.app';
 
 export default async function render(el) {
-  setHeader({ title: 'Install the extension' });
+  setHeader({ title: 'Install the extension', ghost: 'Install' });
   const token = appState.user.capture_token;
   const origin = location.origin;
   const custom = origin !== DEFAULT_SERVER;
@@ -21,7 +21,7 @@ export default async function render(el) {
     </header>
 
     <div class="bento">
-      <ol class="card steps">
+      <ol class="card inverted steps">
         <li>
           <div class="step-title">Download and unzip</div>
           <p class="hint">Unzip it somewhere you'll keep it, like Documents. Chrome loads it from that folder.</p>

@@ -193,7 +193,7 @@ export default async function render(el) {
       type: 'radar',
       data: {
         labels: fw.map((f) => f.framework),
-        datasets: [{ label: 'Average score', data: fw.map((f) => f.avg), borderColor: C.ink, backgroundColor: 'rgba(24,24,27,0.08)',
+        datasets: [{ label: 'Average score', data: fw.map((f) => f.avg), borderColor: C.ink, backgroundColor: C.fill,
           pointRadius: 3, pointBackgroundColor: C.ink, spanGaps: false }],
       },
       options: {
