@@ -23,8 +23,9 @@ export const config = {
     apiKey: env.GEMINI_API_KEY || '',
     freeApiKey: env.GEMINI_API_KEY_FREE || '',
     models: {
-      light: env.GEMINI_MODEL_LIGHT || 'gemini-2.5-flash-lite',
-      strong: env.GEMINI_MODEL_STRONG || 'gemini-2.5-flash',
+      // Gemini 2.5 is closed to new users; these are the current models with a free tier.
+      light: env.GEMINI_MODEL_LIGHT || 'gemini-3.1-flash-lite',
+      strong: env.GEMINI_MODEL_STRONG || 'gemini-3.6-flash',
     },
     timeoutMs: { light: 90_000, strong: 180_000 },
   },
@@ -39,8 +40,8 @@ export const config = {
   // Safety ceiling on AI calls per person per day: one article, its retries,
   // dictionary lookups, an extra round and the weekly review fit well inside it.
   aiDailyLimit: Number(env.AI_DAILY_LIMIT) || 30,
-  // What the whole app may spend on Gemini per UTC day, in US dollars. At about
-  // $0.045 an article, $0.50 covers ~11 articles a day (you plus ten testers),
+  // What the paid key may spend per UTC day, in US dollars. At about $0.075 an
+  // article (Gemini 3.6 Flash, 2026 prices), $0.50 covers ~6 paid articles a day,
   // so $5 of prepaid credit lasts at least ten days of full use.
   appDailyBudgetUsd: Number(env.APP_DAILY_BUDGET_USD) || 0.5,
   // All-time Gemini spend cap in USD. The app can't read the Google balance, so this

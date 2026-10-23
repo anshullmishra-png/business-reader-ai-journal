@@ -40,19 +40,30 @@ const client = (keyTier) => {
 const redact = (msg) => [config.gemini.apiKey, config.gemini.freeApiKey]
   .filter(Boolean).reduce((m, k) => m.split(k).join('[key]'), String(msg));
 
-// Paid-tier prices in USD per 1M tokens (ai.google.dev/gemini-api/docs/pricing).
-// Thinking tokens are billed as output.
+// Paid-tier text prices in USD per 1M tokens (ai.google.dev/gemini-api/docs/pricing).
+// Thinking tokens are billed as output. 3.6/3.8 Flash double on 1 Jan 2027.
+const FLASH_2026 = { input: 0.75, output: 3.75 };
+const FLASH_2027 = { input: 1.50, output: 7.50 };
 const PRICES = {
+  'gemini-3.8-flash': [FLASH_2026, FLASH_2027],
+  'gemini-3.6-flash': [FLASH_2026, FLASH_2027],
+  'gemini-3.5-flash-lite': { input: 0.30, output: 2.50 },
+  'gemini-3.1-flash-lite': { input: 0.25, output: 1.50 },
   'gemini-2.5-flash': { input: 0.30, output: 2.50 },
   'gemini-2.5-flash-lite': { input: 0.10, output: 0.40 },
 };
-const FALLBACK_PRICE = PRICES['gemini-2.5-flash']; // unknown model: assume the dearer one
+const PRICE_CHANGE = '2027-01-01T00:00:00.000Z';
+// Unknown model: assume the dearest current price, so the budgets err on the safe side.
+const priceOf = (model) => {
+  const p = PRICES[model] ?? [FLASH_2026, FLASH_2027];
+  return Array.isArray(p) ? p[new Date().toISOString() >= PRICE_CHANGE ? 1 : 0] : p;
+};
 
 function usageOf(model, meta) {
   const input = meta?.promptTokenCount ?? 0;
   const output = meta?.candidatesTokenCount ?? 0;
   const thinking = meta?.thoughtsTokenCount ?? 0;
-  const p = PRICES[model] ?? FALLBACK_PRICE;
+  const p = priceOf(model);
   return { input, output, thinking, cost: (input * p.input + (output + thinking) * p.output) / 1e6 };
 }
 

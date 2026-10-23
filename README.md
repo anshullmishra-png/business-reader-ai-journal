@@ -55,7 +55,7 @@ flowchart LR
     JOBS["Background jobs<br/>(waitUntil + resume on poll)"]
   end
   DB[("Turso<br/>(libSQL)")]
-  AI["Google Gemini<br/>2.5 Flash / Flash-Lite"]
+  AI["Google Gemini<br/>3.6 Flash / 3.1 Flash-Lite"]
   EXT -- "article text + capture token" --> API
   UI -- "REST /api, session cookie" --> API
   API <--> DB
@@ -75,11 +75,11 @@ flowchart LR
 All AI calls go through [`server/ai/gemini.js`](server/ai/gemini.js):
 
 - **Every response is validated** against a zod schema (sent to Gemini as the response JSON schema, then checked again), with one transport retry and one "return valid JSON only" repair.
-- **Two models:** Flash-Lite for tagging and dictionary lookups; Flash, with thinking left on, for related reading, questions, scoring and weekly reviews.
+- **Two models:** Gemini 3.1 Flash-Lite for tagging and dictionary lookups; Gemini 3.6 Flash, with thinking left on, for related reading, questions, scoring and weekly reviews.
 - **Real usage is logged.** Every call records Gemini's input, output and thinking token counts and its cost at Google's paid rates. Settings shows each reader's tokens and cost today, and the app's spend against its daily budget.
 - **Spending is capped four ways:** one new article per person per day, at most 30 AI calls per person per day, an app-wide daily budget (default $0.50, which pauses AI work until midnight UTC) and a lifetime budget (default $4.80, which stops AI work just before $5 of prepaid credit runs out).
 
-One article end to end costs about **$0.045** (most of it is the questions and scoring on Flash). With the default budget, $5 of prepaid credit lasts at least ten days at full use by eleven readers.
+On the free key, Readout costs nothing. On the paid key, one article end to end costs about **$0.075** at 2026 prices (most of it is the questions and scoring on Flash), rising to about $0.15 when 3.6 Flash doubles in price on 1 January 2027. With the default budgets, $5 of prepaid credit lasts at least ten days.
 
 ## Setup
 

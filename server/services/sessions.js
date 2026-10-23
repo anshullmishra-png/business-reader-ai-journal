@@ -23,8 +23,8 @@ export function localMidnight(tzOffset = 0, daysAgo = 0) {
  * reading in the background. The same URL captured twice in a day returns the
  * existing session.
  */
-// An article runs about 5 AI calls (~$0.045). Leave room for one before starting it.
-const ARTICLE_COST_USD = 0.06;
+// An article runs about 5 AI calls (~$0.075 on the paid key). Leave room for one before starting it.
+const ARTICLE_COST_USD = 0.1;
 
 /** New articles this user has started since their local midnight. */
 export async function articlesToday(userId, tzOffset = 0) {
