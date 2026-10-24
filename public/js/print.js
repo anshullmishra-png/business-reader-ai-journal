@@ -183,7 +183,7 @@ async function portfolioReport() {
   const r = p.readiness;
   return html`
     <div class="r-kicker">Portfolio report · ${fmtDate(scored[0].created_at)} – ${fmtDate(scored[scored.length - 1].created_at)}</div>
-    <h1 class="r-title">${settings.name ? `${settings.name}: ` : ''}Chief of Staff interview practice</h1>
+    <h1 class="r-title">${settings.name ? `${settings.name}: ` : ''}Interview practice</h1>
     <p class="r-prose r-muted" style="margin-top:4pt">Daily business reading (The Ken, The Arc, Entrackr and others) turned into timed interview practice,
       scored by a deliberately tough AI interviewer. 5/10 means an acceptable first-round answer; 8+ needs numbers, structure and a non-obvious insight.</p>
 

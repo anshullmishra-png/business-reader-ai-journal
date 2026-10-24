@@ -2,7 +2,7 @@
 
 **Daily business reading, interview-ready. Read it. Brief it. Defend it.**
 
-Readout turns the business article you read each morning into practice for Chief of Staff and Founder's Office interviews. You condense the article, pull a few threads, then sit a timed 10-question interview scored by a deliberately tough AI interviewer that doesn't round up to be kind.
+Readout turns the business article you read each morning into practice for business, strategy and consulting interviews. You condense the article, pull a few threads, then sit a timed 10-question interview scored by a deliberately tough AI interviewer that doesn't round up to be kind.
 
 It's a hosted web app: each reader signs up with an invite code and gets a private account.
 
@@ -24,7 +24,7 @@ Optional **extra rounds** (Easy to Super hard) add practice without changing the
 
 ## Why a tough interviewer
 
-Generous feedback feels good. Honest feedback is what prepares you. The evaluator is modelled on a demanding Chief of Staff interviewer: short sentences, no compliments unless earned, and it calls out vague thinking, missing numbers and lists that aren't MECE. It is harsh on the work, never on the person.
+Generous feedback feels good. Honest feedback is what prepares you. The evaluator is modelled on a demanding senior interviewer: short sentences, no compliments unless earned, and it calls out vague thinking, missing numbers and lists that aren't MECE. It is harsh on the work, never on the person.
 
 - **5/10** is an acceptable first-round answer.
 - **8+** needs specific numbers, a clear structure *and* a non-obvious insight.

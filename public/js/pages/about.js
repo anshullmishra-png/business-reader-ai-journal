@@ -6,7 +6,7 @@ export default async function render(el) {
   el.innerHTML = html`
     <div class="label page-kicker">About</div>
     <h1 class="page-title">About this journal</h1>
-    <p class="page-lede">Daily business reading, turned into deliberate practice for Chief of Staff and Founder's Office interviews.</p>
+    <p class="page-lede">Daily business reading, turned into deliberate practice for business, strategy and consulting interviews.</p>
 
     <section class="section prose">
       <p>Reading The Ken or The Arc every morning feels productive. But reading isn't the same as being able to explain the
@@ -27,7 +27,7 @@ export default async function render(el) {
     <section class="section">
       <h2 class="section-heading">Why a tough interviewer</h2>
       <div class="prose">
-        <p>The evaluator is modelled on a demanding Chief of Staff interviewer: short sentences, no compliments unless earned.
+        <p>The evaluator is modelled on a demanding senior interviewer: short sentences, no compliments unless earned.
           It calls out vague thinking, missing numbers and lists that aren't MECE. A 5 means acceptable for a first round;
           an 8 needs real numbers, clear structure and a non-obvious insight. Generous feedback feels good. Honest feedback
           is what actually prepares you.</p>

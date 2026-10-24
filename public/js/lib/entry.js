@@ -16,7 +16,7 @@ export function entryHtml(t, { compact = false } = {}) {
       </ul>
       <button class="btn btn-ghost btn-sm" type="button" data-more-examples="${t.id}">${raw(icon('plus'))}More examples</button>
 
-      <div class="entry-label">Why a Chief of Staff should care</div>
+      <div class="entry-label">Why it matters in an interview</div>
       <p class="entry-why">${t.why_it_matters}</p>
 
       <div class="entry-label">Related</div>

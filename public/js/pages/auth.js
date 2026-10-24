@@ -37,7 +37,7 @@ export default async function render(el) {
         <h1 class="auth-word" aria-label="Readout"><span>Read</span><span>out</span></h1>
         <dl class="land-meta">
           <div><dt>Format</dt><dd>One article a day</dd></div>
-          <div><dt>Practice</dt><dd>Chief of Staff interviews</dd></div>
+          <div><dt>Practice</dt><dd>Business interviews</dd></div>
           <div><dt>Scoring</dt><dd>Out of 10, no flattery</dd></div>
           <div><dt>Edition</dt><dd>${year}</dd></div>
         </dl>
@@ -45,7 +45,7 @@ export default async function render(el) {
 
       <section class="land-main">
         <div class="card hard">
-          <p class="land-pitch">Turn your daily business reading into practice for Chief of Staff and Founder's Office interviews.</p>
+          <p class="land-pitch">Turn your daily business reading into practice for business, strategy and consulting interviews.</p>
           <div class="land-rows">
             <div class="land-row"><span class="display">Read<span>Write</span></span><span class="mono">${raw(icon('arrow-up-right'))}10 min</span></div>
             <div class="land-row"><span class="display">Interview<span>Verdict</span></span><span class="mono">${raw(icon('arrow-up-right'))}10 Qs</span></div>
