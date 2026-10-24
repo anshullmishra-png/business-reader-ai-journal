@@ -142,7 +142,6 @@ button, [role='tab'], [data-lookup], [data-toggle], .option, .strip-day a, .read
 button:disabled, .btn:disabled { cursor: not-allowed; }
 .editor, .answer, .input, textarea { cursor: text; }
 .option:active:not(:disabled), .strip-day:active { transform: scale(0.99); }
-.guest-row { display: grid; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
 .sample-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--rule); }
 
 /* Reading a pasted article inside the app */

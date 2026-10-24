@@ -1,4 +1,4 @@
-// Fictional articles for trying Readout on test deployments (guest mode only).
+// Fictional articles for trying Readout (shown when SAMPLE_ARTICLES=1).
 // Companies, people and figures are invented.
 export const SAMPLES = [
   {

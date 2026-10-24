@@ -147,7 +147,7 @@ export default async function render(el) {
             </div>
           </form>
 
-          ${appState.ai?.test_mode ? html`<div class="sample-row"><span class="hint">Testing?</span>${SAMPLES.map((s, i) => html`<button class="btn btn-ghost btn-sm" type="button" data-sample="${i}">Sample ${i + 1}</button>`)}</div>` : ''}
+          ${appState.ai?.samples ? html`<div class="sample-row"><span class="hint">No article handy?</span>${SAMPLES.map((s, i) => html`<button class="btn btn-ghost btn-sm" type="button" data-sample="${i}">Sample ${i + 1}</button>`)}</div>` : ''}
           <div id="add-status" aria-live="polite"></div>
         </section>
 
@@ -201,7 +201,7 @@ export default async function render(el) {
   };
   for (const t of $$('[data-mode]', el)) t.addEventListener('click', () => setMode(t.dataset.mode));
 
-  // Test deployments: fill the text form with a fictional article.
+  // Sample articles (when turned on): fill the text form with a fictional article.
   for (const b of $$('[data-sample]', el)) {
     b.addEventListener('click', () => {
       const s = SAMPLES[Number(b.dataset.sample)];

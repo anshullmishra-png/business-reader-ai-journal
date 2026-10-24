@@ -92,6 +92,7 @@ On the free key, Readout costs nothing. On the paid key, one article end to end 
 | `GEMINI_API_KEY` | Paid key (prepaid credit). Paid-plan accounts use it until a budget is hit, then fall back to the free key |
 | `INVITE_CODE` | Sign-up code for a free-plan account |
 | `INVITE_CODE_PAID` | Sign-up code for a paid-plan account; also upgrades an existing account from Settings |
+| `SAMPLE_ARTICLES` | `1` shows three fictional sample articles on Today (handy on test deployments) |
 | `ARTICLES_PER_DAY` | New articles per person per day (default 1) |
 | `APP_DAILY_BUDGET_USD` | App-wide Gemini spend per day (default 0.50) |
 | `LIFETIME_BUDGET_USD` | All-time Gemini spend cap (default 4.80); raise it after a top-up |
