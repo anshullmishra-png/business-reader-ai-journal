@@ -44,6 +44,10 @@ export async function fetchArticle(url) {
       ? 'The site took too long to respond.'
       : "Couldn't reach that site. Check the link and your connection.");
   }
+  // Many publishers refuse requests from servers even for free articles.
+  if ([401, 403, 429, 451].includes(res.status)) {
+    throw new ExtractError('blocked', "This site doesn't allow automatic reading. Use the Send to Readout extension from the article tab, or paste the text.");
+  }
   if (!res.ok) throw new ExtractError('fetch_failed', `The site returned an error (HTTP ${res.status}).`);
   if (!/html/i.test(res.headers.get('content-type') ?? '')) {
     throw new ExtractError('not_article', "That link isn't a web page.");

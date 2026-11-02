@@ -224,7 +224,7 @@ export default async function render(el) {
       navigate(`/session/${id}`);
     } catch (err) {
       busy(form, false);
-      if (err.data?.code === 'too_short' && body.mode === 'url') {
+      if (['too_short', 'blocked'].includes(err.data?.code) && body.mode === 'url') {
         status(html`
           <p class="form-error">${err.message}</p>
           <button class="btn btn-ghost btn-sm" type="button" id="switch-to-text">Paste the text instead</button>`);
