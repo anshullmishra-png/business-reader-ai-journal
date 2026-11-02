@@ -18,12 +18,14 @@ const files = [];
   }
 })(src);
 
-// Minimal ZIP writer (deflate, no extras). Everything sits inside a send-to-readout/ folder.
+// Minimal ZIP writer (deflate, no extras). Files sit at the top of the zip: unzipping
+// already creates a send-to-readout folder, and a second one inside it makes Chrome's
+// "Load unpacked" fail with "Manifest file is missing".
 const local = [];
 const central = [];
 let offset = 0;
 for (const file of files) {
-  const name = Buffer.from(`send-to-readout/${relative(src, file).split(sep).join('/')}`);
+  const name = Buffer.from(relative(src, file).split(sep).join('/'));
   const data = readFileSync(file);
   const packed = deflateRawSync(data, { level: 9 });
   const crc = crc32(data);

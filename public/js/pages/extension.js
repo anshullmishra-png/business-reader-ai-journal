@@ -33,7 +33,7 @@ export default async function render(el) {
         </li>
         <li>
           <div class="step-title">Click "Load unpacked"</div>
-          <p class="hint">Choose the unzipped <code>send-to-readout</code> folder. Then pin it from the puzzle-piece menu next to the address bar.</p>
+          <p class="hint">Choose the unzipped <code>send-to-readout</code> folder (the one with <code>manifest.json</code> directly inside it). Then pin it from the puzzle-piece menu next to the address bar.</p>
         </li>
         <li>
           <div class="step-title">Paste your capture token</div>
