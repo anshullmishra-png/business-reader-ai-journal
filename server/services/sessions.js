@@ -4,7 +4,7 @@ import { detectSource } from '../ai/taxonomy.js';
 import { countWords } from './extract.js';
 import { enqueue } from '../jobs/runner.js';
 import { ensureRelated } from './related.js';
-import { httpError } from './auth.js';
+import { httpError, isOwner } from './auth.js';
 import { config } from '../config.js';
 import { keyFor, AiError } from '../ai/gemini.js';
 
@@ -36,7 +36,7 @@ export async function articlesToday(userId, tzOffset = 0) {
 // waits once the paid budget can't cover a whole article.
 async function checkArticleAllowance(userId, tzOffset) {
   const n = await articlesToday(userId, tzOffset);
-  if (n >= config.articlesPerDay) {
+  if (n >= config.articlesPerDay && !(await isOwner(userId))) {
     throw httpError(429, config.articlesPerDay === 1
       ? "You've already started today's article. The next one unlocks tomorrow."
       : `You've started ${n} articles today, the daily limit. More unlock tomorrow.`, { code: 'article_limit' });

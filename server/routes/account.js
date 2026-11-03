@@ -7,7 +7,7 @@ import { callsToday, appSpendToday, appSpendTotal, keyFor } from '../ai/gemini.j
 import { articlesToday, articleBlock } from '../services/sessions.js';
 import {
   signUp, signIn, signOut, readCookie, setSessionCookie, clearSessionCookie, requireUser,
-  publicUser, updateSettings, regenerateCaptureToken, redeemPaidCode,
+  publicUser, updateSettings, regenerateCaptureToken, redeemPaidCode, isOwner,
 } from '../services/auth.js';
 
 export const authRouter = Router();
@@ -42,9 +42,9 @@ authRouter.post('/signout', async (req, res) => {
 meRouter.use(requireUser);
 
 meRouter.get('/', async (req, res) => {
-  const [today, articles, appSpend, appTotal, block, keyNow] = await Promise.all([
+  const [today, articles, appSpend, appTotal, block, keyNow, owner] = await Promise.all([
     callsToday(req.user.id), articlesToday(req.user.id, req.tz), appSpendToday(), appSpendTotal(),
-    articleBlock(req.user.id, req.tz), keyFor(req.user.id).catch(() => null),
+    articleBlock(req.user.id, req.tz), keyFor(req.user.id).catch(() => null), isOwner(req.user.id),
   ]);
   res.json({
     ...publicUser(req.user),
@@ -54,9 +54,10 @@ meRouter.get('/', async (req, res) => {
       key_now: keyNow,
       article_block: block,
       articles_today: articles,
-      articles_per_day: config.articlesPerDay,
+      // null: no per-person limit (the owner).
+      articles_per_day: owner ? null : config.articlesPerDay,
       calls_today: today.total,
-      daily_limit: config.aiDailyLimit,
+      daily_limit: owner ? null : config.aiDailyLimit,
       input_tokens_today: today.input_tokens,
       output_tokens_today: today.output_tokens,
       cost_today_usd: today.cost_usd,

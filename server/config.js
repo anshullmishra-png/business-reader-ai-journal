@@ -45,6 +45,9 @@ export const config = {
   sampleArticles: env.SAMPLE_ARTICLES === '1',
   // New articles each person may start per day (each one runs ~5 AI calls).
   articlesPerDay: Number(env.ARTICLES_PER_DAY) || 1,
+  // Comma-separated emails with no per-person limits (the app's owner). The app-wide
+  // daily and lifetime budgets still apply to them.
+  ownerEmails: (env.OWNER_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
   // Safety ceiling on AI calls per person per day: one article, its retries,
   // dictionary lookups, an extra round and the weekly review fit well inside it.
   aiDailyLimit: Number(env.AI_DAILY_LIMIT) || 30,

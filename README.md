@@ -94,6 +94,7 @@ On the free key, Readout costs nothing. On the paid key, one article end to end 
 | `INVITE_CODE_PAID` | Sign-up code for a paid-plan account; also upgrades an existing account from Settings |
 | `SAMPLE_ARTICLES` | `1` shows three fictional sample articles on Today (handy on test deployments) |
 | `ARTICLES_PER_DAY` | New articles per person per day (default 1) |
+| `OWNER_EMAILS` | Comma-separated emails with no per-person article or AI-call limits; the app-wide budgets still apply |
 | `APP_DAILY_BUDGET_USD` | App-wide Gemini spend per day (default 0.50) |
 | `LIFETIME_BUDGET_USD` | All-time Gemini spend cap (default 4.80); raise it after a top-up |
 | `AI_DAILY_LIMIT` | AI calls per person per day (default 30) |

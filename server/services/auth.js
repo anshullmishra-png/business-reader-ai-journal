@@ -127,6 +127,13 @@ export function publicUser(u) {
   };
 }
 
+/** True for the owner's account (OWNER_EMAILS), which skips per-person limits. */
+export async function isOwner(userId) {
+  if (!config.ownerEmails.length || userId == null) return false;
+  const u = await db.get('SELECT email FROM users WHERE id = ?', userId);
+  return Boolean(u && config.ownerEmails.includes(u.email.toLowerCase()));
+}
+
 export async function updateSettings(userId, patch) {
   const map = { name: 'name', timer_seconds: 'timer_seconds', template_default: 'template_default' };
   for (const [k, col] of Object.entries(map)) {

@@ -5,6 +5,7 @@ import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { db, now } from '../db/index.js';
+import { isOwner } from '../services/auth.js';
 
 export class AiError extends Error {
   /** @param {'not_configured'|'quota'|'busy'|'overloaded'|'budget'|'credit'|'timeout'|'invalid_output'|'failed'} code */
@@ -212,7 +213,7 @@ export async function runTask({ userId, task, tier = 'light', system, prompt, sc
   const keyTier = await keyFor(userId);
   if (userId != null) {
     const today = await callsToday(userId);
-    if (today.total >= config.aiDailyLimit) throw new AiError('quota', 'daily AI limit reached');
+    if (today.total >= config.aiDailyLimit && !(await isOwner(userId))) throw new AiError('quota', 'daily AI limit reached');
   }
   const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' });
   delete jsonSchema.$schema;

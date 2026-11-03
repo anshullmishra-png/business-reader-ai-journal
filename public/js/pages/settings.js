@@ -56,7 +56,9 @@ export default async function render(el) {
             ${ai.key_now ? html`<span class="hint">Running on the ${ai.key_now === 'paid' ? 'paid key' : 'free tier'}</span>` : ''}
           </div>
           ${ai.configured
-            ? html`<div class="meter-row"><span class="stat-num">${ai.articles_today}</span><span class="hint">of ${ai.articles_per_day} article${ai.articles_per_day === 1 ? '' : 's'} today</span></div>
+            ? html`<div class="meter-row"><span class="stat-num">${ai.articles_today}</span><span class="hint">${ai.articles_per_day == null
+              ? `article${ai.articles_today === 1 ? '' : 's'} today · no daily limit (owner)`
+              : `of ${ai.articles_per_day} article${ai.articles_per_day === 1 ? '' : 's'} today`}</span></div>
                <dl class="dl usage-dl">
                  <dt>Your AI calls</dt><dd>${ai.calls_today}</dd>
                  <dt>Tokens in / out</dt><dd>${fmtTokens(ai.input_tokens_today)} / ${fmtTokens(ai.output_tokens_today)}</dd>
